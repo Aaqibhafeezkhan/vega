@@ -27,6 +27,22 @@ Bridge (only on Vega's origin, never inside the YouTube iframe; implemented with
 
 Limits: the system or an aggressive battery saver (some OEMs kill the process on swipe regardless of foreground services) can still end playback; exempt Vega in the phone's battery settings. Android's "Force stop" always stops it.
 
+**Background after leaving the app:** `KeepVisibleWebView` ignores Android's "window not visible" signal, so when you switch to another app or turn the screen off the page stays `visible` and YouTube's player does not pause itself (verified: `document.visibilityState` stays `visible` after Home and screen-off). Another app that takes audio focus (a video, a call) still pauses Vega, like any music app.
+
+## Updating
+
+The Android app updates itself from GitHub releases, like the Windows app (Settings -> Updates):
+
+1. At start and every 6 hours the page reads the newest release (`lib/androidUpdate.ts`) and compares its version with the installed one.
+2. If newer, the APK is downloaded in the background (switch "Download updates automatically" off to ask first); only `https://github.com/DhruvHarani1/vega/releases/download/...` is accepted.
+3. "Install update" hands the APK to Android's PackageInstaller (`AppUpdater.kt`). Android shows its install dialog (the first time it also asks to allow "install unknown apps" for Vega). A silent install is not possible without a store or device-owner rights.
+
+Android only installs an update signed with the **same key** as the installed app, so every release APK must use the release keystore:
+
+- Local: `~/.vega/keystore.properties` (storeFile, storePassword, keyAlias, keyPassword; kept outside the repo, back it up! losing it means users must uninstall and reinstall). `npm run android:release` picks it up automatically.
+- CI: add the repo secrets `VEGA_KEYSTORE_B64` (`base64 -w0 ~/.vega/vega-release.jks`), `VEGA_KEYSTORE_PASSWORD`, `VEGA_KEY_ALIAS` (`vega`), `VEGA_KEY_PASSWORD`. Without them CI signs with a throwaway debug key and updates would fail to install.
+- An APK signed with a different key (the debug key, an older build) must be uninstalled once before the stable-key APK can be installed.
+
 ## Build
 
 Needs JDK 17 and the Android SDK (platform 36, build-tools). `scripts/android.mjs` finds them (`JAVA_HOME`, `ANDROID_HOME`, or the default Windows locations) and writes `android/local.properties`.
@@ -34,7 +50,7 @@ Needs JDK 17 and the Android SDK (platform 36, build-tools). `scripts/android.mj
 ```bash
 npm run android:debug     # android/app/build/outputs/apk/debug/app-debug.apk
 npm run android:install   # debug build + adb install to the connected device / emulator
-npm run android:release   # release APK (debug key unless VEGA_KEYSTORE* are set)
+npm run android:release   # release APK (signed with ~/.vega/keystore.properties when present, else the debug key)
 ```
 
 Version comes from `package.json` (`0.4.5` -> versionCode `405`). The debug build has the id `dev.vega.android.debug`, so it installs next to a release build.
@@ -57,6 +73,7 @@ Debug builds allow cleartext only to `10.0.2.2` / `localhost`. Point at another 
 
 - `VegaWeb.kt` the retained WebView: settings, bridge, external links to the browser, offline page
 - `MainActivity.kt` edge-to-edge insets (dark bars), back button, notification permission, attaches `VegaWeb`
+- `AppUpdater.kt` APK download + PackageInstaller install, `InstallReceiver`
 - `PlaybackService.kt` foreground service, MediaSession, notification, wake/Wi-Fi locks
 - icons: `scripts/make-android-icons.py` (from `build/icon.png`); the splash is the Android 12 system splash with the star on the app colour
 

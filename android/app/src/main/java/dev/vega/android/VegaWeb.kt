@@ -22,6 +22,17 @@ import androidx.webkit.WebViewFeature
 import org.json.JSONObject
 
 /**
+ * Chromium hides the page (document.visibilityState = "hidden") when the activity stops, i.e. when the user leaves for
+ * another app or turns the screen off, and YouTube's player reacts by pausing. Ignoring the "window not visible" signal
+ * keeps the page "visible", so the embedded player keeps playing in the background.
+ */
+class KeepVisibleWebView(context: Context) : WebView(context) {
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        if (visibility != GONE) super.onWindowVisibilityChanged(visibility)
+    }
+}
+
+/**
  * The one WebView of the app, kept alive independently of the activity. Swiping Vega away from Recents destroys the
  * activity, but while a track plays the foreground service keeps the process, and this WebView (and with it the YouTube
  * player and the page state) keeps running; reopening the app re-attaches the same view with playback intact.
@@ -76,7 +87,7 @@ object VegaWeb {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun create(app: Context): WebView {
-        val v = WebView(MutableContextWrapper(app))
+        val v = KeepVisibleWebView(MutableContextWrapper(app))
         v.setBackgroundColor(bg)
         v.settings.javaScriptEnabled = true
         v.settings.domStorageEnabled = true // localStorage / IndexedDB: library, offline saves, session
@@ -108,7 +119,8 @@ object VegaWeb {
 
         // The bridge object exists only on Vega's own origin (never inside the YouTube iframe).
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
-            WebViewCompat.addWebMessageListener(v, "vegaAndroid", setOf(origin)) { _, message: WebMessageCompat, _, _, _ ->
+            WebViewCompat.addWebMessageListener(v, "vegaAndroid", setOf(origin)) { _, message: WebMessageCompat, _, _, reply ->
+                AppUpdater.attach(reply)
                 message.data?.let { onPageMessage(app, it) }
             }
         }
@@ -124,7 +136,13 @@ object VegaWeb {
     private fun onPageMessage(app: Context, json: String) {
         try {
             val o = JSONObject(json)
-            if (o.optString("type") != "state") return
+            when (o.optString("type")) {
+                "hello" -> return AppUpdater.hello()
+                "update-download" -> return AppUpdater.download(app, o.optString("url"))
+                "update-install" -> return AppUpdater.install(app)
+                "state" -> Unit
+                else -> return
+            }
             PlaybackService.update(
                 app,
                 NowPlaying(

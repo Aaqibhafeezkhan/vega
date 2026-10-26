@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detectPlatform, pickAssets } from './downloads'
+import { detectPlatform, isNewer, pickAssets } from './downloads'
 
 describe('downloads', () => {
   it('detects the visitor platform', () => {
@@ -23,5 +23,12 @@ describe('downloads', () => {
 
   it('has no apk when the release lacks one', () => {
     expect(pickAssets({ tag_name: 'v0.4.5', assets: [{ name: 'Vega-Setup-0.4.5.exe', browser_download_url: 'u' }] }).android).toBeNull()
+  })
+
+  it('compares versions', () => {
+    expect(isNewer('0.4.8', '0.4.7')).toBe(true)
+    expect(isNewer('v0.10.0', '0.9.9')).toBe(true)
+    expect(isNewer('0.4.7', '0.4.7')).toBe(false)
+    expect(isNewer('0.4.6', '0.4.7')).toBe(false)
   })
 })

@@ -7,9 +7,11 @@
 import { refKey } from '@shared/types'
 import { useUi } from '@/store/ui'
 import { getPosition, usePlayer } from '@/store/player'
+import { initAndroidUpdate } from './androidUpdate'
 
 interface NativePort {
   postMessage(msg: string): void
+  onmessage: ((e: { data: string }) => void) | null
 }
 declare global {
   interface Window {
@@ -46,6 +48,7 @@ export function initAndroidBridge(): void {
   const native = window.vegaAndroid
   if (!native) return
   window.__vegaAndroid = { command: runCommand, back: handleBack }
+  initAndroidUpdate()
 
   let lastKey = ''
   const push = (force = false): void => {

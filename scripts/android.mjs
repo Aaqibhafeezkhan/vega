@@ -5,7 +5,8 @@
 //   install  debug build + adb install to the connected device / emulator
 //   dev      debug build that loads the Vite dev server on this machine (http://10.0.2.2:5174 from an emulator), then installs it
 import { spawnSync } from 'node:child_process'
-import { existsSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -34,6 +35,22 @@ const sdk = findSdk()
 if (!jdk) throw new Error('JDK 17 not found. Install Temurin 17 or set JAVA_HOME.')
 if (!sdk) throw new Error('Android SDK not found. Install it (Android Studio) or set ANDROID_HOME.')
 const env = { ...process.env, JAVA_HOME: jdk, ANDROID_HOME: sdk, ANDROID_SDK_ROOT: sdk }
+
+// Release signing key: ~/.vega/keystore.properties (storeFile, storePassword, keyAlias, keyPassword), kept outside the repo.
+// Updates only install over an app signed with the same key, so every release APK must use this one.
+const ksFile = join(homedir(), '.vega', 'keystore.properties')
+if (!env.VEGA_KEYSTORE && existsSync(ksFile)) {
+  const p = Object.fromEntries(
+    readFileSync(ksFile, 'utf8')
+      .split(/\r?\n/)
+      .filter((l) => l.includes('='))
+      .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
+  )
+  env.VEGA_KEYSTORE = p.storeFile
+  env.VEGA_KEYSTORE_PASSWORD = p.storePassword
+  env.VEGA_KEY_ALIAS = p.keyAlias
+  env.VEGA_KEY_PASSWORD = p.keyPassword
+}
 writeFileSync(join(androidDir, 'local.properties'), `sdk.dir=${sdk.replace(/\\/g, '/')}\n`)
 
 function run(cmd, args, cwd = androidDir) {

@@ -3,6 +3,7 @@ import type { UpdateState } from '@shared/ipc'
 import { Icon } from '@/components/Icon'
 import { load, save } from '@/lib/persist'
 import { detectPlatform, fetchDownloads, type Downloads } from '@/lib/downloads'
+import { checkForUpdate, installUpdate, isAndroidApp, startDownload, useAndroidUpdate } from '@/lib/androidUpdate'
 import { clearOffline, offlineStats } from '@/lib/offline'
 import { pingsEnabled, setPingsEnabled } from '@/lib/trending'
 import { useAuth } from '@/store/auth'
@@ -104,6 +105,73 @@ function GetAppPanel() {
   )
 }
 
+function AndroidUpdatesPanel() {
+  const u = useAndroidUpdate()
+  const [auto, setAuto] = useState(() => load<boolean>('update.auto', true))
+  const line =
+    u.state === 'checking'
+      ? 'Checking for updates…'
+      : u.state === 'available'
+        ? `Vega ${u.latest} is available.`
+        : u.state === 'downloading'
+          ? `Downloading Vega ${u.latest}… ${u.percent}%`
+          : u.state === 'ready'
+            ? `Vega ${u.latest} is ready to install.`
+            : u.state === 'installing'
+              ? 'Installing… confirm in the Android dialog if it appears.'
+              : u.state === 'none'
+                ? 'You have the latest version.'
+                : u.state === 'error'
+                  ? `Update problem: ${u.message}`
+                  : 'Updates are checked automatically in the background.'
+  return (
+    <div className="panel">
+      <h3>Updates</h3>
+      <div className="toggle-row">
+        <div className="grow">
+          <div className="row-title">Vega {u.installed}</div>
+          <div className={`row-sub${u.state === 'error' ? ' err' : ''}`}>{line}</div>
+          {u.state === 'downloading' && (
+            <div className="bar-track" style={{ marginTop: 8 }}>
+              <div className="bar-fill" style={{ width: `${u.percent}%` }} />
+            </div>
+          )}
+        </div>
+        {u.state === 'ready' ? (
+          <button className="pill big" onClick={installUpdate}>
+            Install update
+          </button>
+        ) : u.state === 'available' ? (
+          <button className="pill big" onClick={startDownload}>
+            Download
+          </button>
+        ) : (
+          <button className="pill ghost" disabled={u.state === 'checking' || u.state === 'downloading' || u.state === 'installing'} onClick={() => void checkForUpdate()}>
+            Check now
+          </button>
+        )}
+      </div>
+      <div className="toggle-row" style={{ marginTop: 16 }}>
+        <div className="grow">
+          <div className="row-title">Download updates automatically</div>
+          <div className="row-sub">New versions download in the background; you confirm the install.</div>
+        </div>
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={auto}
+            onChange={(e) => {
+              setAuto(e.target.checked)
+              save('update.auto', e.target.checked)
+            }}
+          />
+          <span />
+        </label>
+      </div>
+    </div>
+  )
+}
+
 function UpdatesPanel() {
   const api = window.vega
   const [info, setInfo] = useState<{ version: string; packaged: boolean } | null>(null)
@@ -117,6 +185,7 @@ function UpdatesPanel() {
     return api.update.onState(setU)
   }, [api])
 
+  if (!api && isAndroidApp()) return <AndroidUpdatesPanel />
   if (!api) {
     return (
       <>
