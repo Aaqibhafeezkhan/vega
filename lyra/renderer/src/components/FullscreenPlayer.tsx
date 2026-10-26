@@ -23,8 +23,9 @@ export function FullscreenPlayer() {
   const toggleDf = useUi((s) => s.toggleDistractionFree)
 
   const quiet = idle && panel === 'none'
-  // cinema layout: a video is playing, so get the UI out of its way
-  const cinema = useBgState((s) => s.media === 'full') || new URLSearchParams(location.search).has('cinema') // ?cinema previews the layout without a video
+  // Design D layout: video (or the artwork backdrop when there is none) behind big lyrics, with a floating dock
+  const hasVideo = useBgState((s) => s.media === 'full')
+  const cinema = hasVideo || document.documentElement.dataset.platform !== 'android'
   const layout = useSettings((s) => s.settings.fullLayout)
 
   return (
