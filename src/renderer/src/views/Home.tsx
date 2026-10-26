@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buildCoListening, buildProfile, coListeningScores, recommend } from '@shared/recs'
 import type { Shelf as ShelfData } from '@shared/provider'
-import { refKey } from '@shared/types'
+import { refKey, type Track } from '@shared/types'
 import { Cover } from '@/components/Cover'
 import { Icon } from '@/components/Icon'
 import { Shelf } from '@/components/Shelf'
@@ -11,6 +11,7 @@ import { useCatalog } from '@/store/catalog'
 import { useLibrary } from '@/store/library'
 import { useMeta } from '@/store/meta'
 import { useLang } from '@/store/lang'
+import { fetchTrending } from '@/lib/trending'
 import { useOnline } from '@/store/online'
 import { usePlayer } from '@/store/player'
 import { useUi } from '@/store/ui'
@@ -36,6 +37,7 @@ export function Home() {
   const go = useUi((s) => s.go)
   const lang = useLang((s) => s.lang)
   const [shelves, setShelves] = useState<ShelfData[] | null>(null)
+  const [trending, setTrending] = useState<Track[]>([])
   const [similar, setSimilar] = useState<{ seed: string; artists: Set<string> } | null>(null)
 
   useEffect(() => {
@@ -46,6 +48,14 @@ export function Home() {
       live = false
     }
   }, [online, demo, lang])
+
+  useEffect(() => {
+    let live = true
+    void fetchTrending(16).then((t) => live && setTrending(t))
+    return () => {
+      live = false
+    }
+  }, [])
 
   const recent = useMemo(() => recentTracks(events, 10), [events])
 
@@ -186,6 +196,7 @@ export function Home() {
         </section>
       )}
 
+      <Shelf title="Trending on Vega" subtitle="What listeners are playing this week" tracks={trending} />
       <Shelf title="Jump back in" tracks={recent} />
       {recent[0] && <Shelf title={`Because you played ${recent[0].title}`} tracks={because} />}
       <Shelf title="Discover" subtitle="Tracks you have not heard, close to your taste" tracks={discover} />

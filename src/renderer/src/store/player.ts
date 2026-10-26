@@ -3,6 +3,7 @@ import type { Track } from '@shared/types'
 import { backend } from '@/lib/backend'
 import { sources } from '@/lib/sources'
 import { load, save } from '@/lib/persist'
+import { pingPlay } from '@/lib/trending'
 import { ytEmbed } from '@/lib/ytEmbed'
 import { useLibrary } from './library'
 
@@ -53,6 +54,7 @@ function finishSession(skipped: boolean): void {
   if (listenedMs < 1500) return // ignore accidental clicks
   const counted = listenedMs >= Math.min(30_000, track.durationMs * 0.5)
   useLibrary.getState().logPlay({ track, startedAt, listenedMs, counted, skipped: skipped && !counted })
+  if (counted) pingPlay(track)
 }
 
 function shuffled<T>(arr: T[]): T[] {

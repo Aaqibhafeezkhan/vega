@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { UpdateState } from '@shared/ipc'
 import { Icon } from '@/components/Icon'
 import { load, save } from '@/lib/persist'
+import { pingsEnabled, setPingsEnabled } from '@/lib/trending'
 import { useAuth } from '@/store/auth'
 import { useUi } from '@/store/ui'
 
@@ -13,6 +14,30 @@ const SHORTCUTS: [string, string][] = [
   ['Ctrl + ← / →', 'Previous / next track'],
   ['Esc', 'Close panels and menus']
 ]
+
+function PrivacyPanel() {
+  const [on, setOn] = useState(pingsEnabled)
+  return (
+    <div className="panel toggle-row">
+      <div className="grow">
+        <div className="row-title">Count my plays for Trending</div>
+        <div className="row-sub">Adds one anonymous tick (song only, no account, no device id) when you finish listening to a YouTube Music track.</div>
+      </div>
+      <label className="switch">
+        <input
+          type="checkbox"
+          checked={on}
+          aria-label="Count my plays for Trending"
+          onChange={(e) => {
+            setPingsEnabled(e.target.checked)
+            setOn(e.target.checked)
+          }}
+        />
+        <span />
+      </label>
+    </div>
+  )
+}
 
 function UpdatesPanel() {
   const api = window.vega
@@ -124,6 +149,8 @@ export function Settings() {
           {user ? 'Manage' : 'Sign in'}
         </button>
       </div>
+
+      <PrivacyPanel />
 
       <div className="panel toggle-row">
         <div className="grow">
