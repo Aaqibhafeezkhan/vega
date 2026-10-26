@@ -1,6 +1,6 @@
 import { useIdle } from '@/hooks/useIdle'
 import { usePlayerView } from '@/hooks/usePlayerView'
-import { joinArtists } from '@/lib/format'
+import { formatTime, joinArtists } from '@/lib/format'
 import { useBgState } from '@/store/bgState'
 import { usePlayer } from '@/store/player'
 import { useSettings } from '@/store/settings'
@@ -24,46 +24,90 @@ export function FullscreenPlayer() {
 
   const quiet = idle && panel === 'none'
   // cinema layout: a video is playing, so get the UI out of its way
-  const cinema = useBgState((s) => s.media === 'full')
+  const cinema = useBgState((s) => s.media === 'full') || new URLSearchParams(location.search).has('cinema') // ?cinema previews the layout without a video
   const layout = useSettings((s) => s.settings.fullLayout)
 
   return (
     <div className={`full ${quiet ? 'is-idle' : ''} ${df ? 'is-df' : ''} ${cinema ? `is-cinema layout-${layout}` : ''}`}>
       <header className="full__top">
         <span className="full__device">{device ? `Playing on ${device.name}` : 'Vega'}</span>
-        <div className="full__tools">
-          <IconButton icon="type" label="Distraction-free: artwork and lyrics only" active={df} onClick={toggleDf} />
-          <IconButton icon="settings" label="Settings" active={panel === 'settings'} onClick={() => togglePanel('settings')} />
-          <IconButton icon="exitFullscreen" label="Exit fullscreen (Esc)" onClick={() => requestMode('mini')} />
-        </div>
+        {cinema ? (
+          <div className="cine-pills">
+            <button className={df ? 'on' : ''} onClick={toggleDf} title="Distraction-free: video and lyrics only">
+              Aa
+            </button>
+            <button className={panel === 'settings' ? 'on' : ''} onClick={() => togglePanel('settings')}>
+              Settings
+            </button>
+            <button onClick={() => requestMode('mini')} title="Exit fullscreen (Esc)">
+              Collapse
+            </button>
+          </div>
+        ) : (
+          <div className="full__tools">
+            <IconButton icon="type" label="Distraction-free: artwork and lyrics only" active={df} onClick={toggleDf} />
+            <IconButton icon="settings" label="Settings" active={panel === 'settings'} onClick={() => togglePanel('settings')} />
+            <IconButton icon="exitFullscreen" label="Exit fullscreen (Esc)" onClick={() => requestMode('mini')} />
+          </div>
+        )}
       </header>
 
       {view === 'playing' && track ? (
         <div className="full__body">
-          <aside className="full__side">
-            <Artwork url={track.artworkUrl} size={cinema ? 'clamp(84px, 12vh, 124px)' : 'min(34vw, 46vh, 460px)'} radius={cinema ? 14 : 18} className="artwork--lift" />
-            <div className="full__chrome">
-              <div className="full__titlerow">
-                <div className="full__titles">
-                  <h1 title={track.title}>{track.title}</h1>
-                  <p className="full__artist">{joinArtists(track.artists)}</p>
-                  <p className="full__album">
-                    {track.album}
-                    {track.releaseYear ? ` · ${track.releaseYear}` : ''}
-                  </p>
+          {cinema ? (
+            <>
+              <div className="cine-ttl">
+                <Artwork url={track.artworkUrl} size={84} radius={22} className="artwork--lift" />
+                <div>
+                  <h2 title={track.title}>{track.title}</h2>
+                  <p>{joinArtists(track.artists)}</p>
+                  <span className="cine-tag">{[track.album, track.releaseYear, formatTime(track.durationMs)].filter(Boolean).join(' · ')}</span>
                 </div>
-                <LikeButton size={22} />
               </div>
-              <ProgressBar showTimes remaining />
-              <div className="full__controls">
-                <Transport size="lg" extras />
+              <div className="cine-dock">
+                <div className="cine-l">
+                  <Artwork url={track.artworkUrl} size={48} radius={24} />
+                  <div>
+                    <b title={track.title}>{track.title}</b>
+                    <span>{joinArtists(track.artists)}</span>
+                  </div>
+                </div>
+                <div className="cine-c">
+                  <Transport size="lg" extras />
+                  <ProgressBar showTimes />
+                </div>
+                <div className="cine-r">
+                  <LikeButton size={20} />
+                  <VolumeControl />
+                </div>
               </div>
-              <div className="full__volume">
-                <VolumeControl wide />
-                <IconButton icon="external" label="Open in Spotify" size={16} onClick={() => void window.lyra.player.openInSpotify(track)} />
+            </>
+          ) : (
+          <aside className="full__side">
+              <Artwork url={track.artworkUrl} size={cinema ? 'clamp(84px, 12vh, 124px)' : 'min(34vw, 46vh, 460px)'} radius={cinema ? 14 : 18} className="artwork--lift" />
+              <div className="full__chrome">
+                <div className="full__titlerow">
+                  <div className="full__titles">
+                    <h1 title={track.title}>{track.title}</h1>
+                    <p className="full__artist">{joinArtists(track.artists)}</p>
+                    <p className="full__album">
+                      {track.album}
+                      {track.releaseYear ? ` · ${track.releaseYear}` : ''}
+                    </p>
+                  </div>
+                  <LikeButton size={22} />
+                </div>
+                <ProgressBar showTimes remaining />
+                <div className="full__controls">
+                  <Transport size="lg" extras />
+                </div>
+                <div className="full__volume">
+                  <VolumeControl wide />
+                  <IconButton icon="external" label="Open in Spotify" size={16} onClick={() => void window.lyra.player.openInSpotify(track)} />
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
+          )}
           <section className="full__lyrics">
             <LyricsView variant="full" />
           </section>

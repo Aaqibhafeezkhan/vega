@@ -17,3 +17,66 @@
 .sidepanel__head h3 { font-weight: 800; letter-spacing: -0.04em; }
 .sidepanel__head, .eyebrow, kbd { font-family: var(--mono); }
 .sidepanel__head h3 { font-family: var(--font); }
+
+/* ================= Design D: fullscreen cinema (video behind big left-aligned lyrics, title block, floating dock) ================= */
+:root:not([data-platform='android']) .full.is-cinema .full__device {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.cine-pills { display: flex; gap: 8px; }
+.cine-pills button { padding: 9px 15px; border-radius: 99px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(14px); color: var(--fg); font: 700 13px var(--font); transition: background 0.2s; }
+.cine-pills button:hover { background: rgba(255, 255, 255, 0.2); }
+.cine-pills button.on { background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #ff3d7f)); color: #1a0600; border-color: transparent; }
+
+/* title block, bottom-left above the dock */
+.cine-ttl { position: absolute; z-index: 3; left: clamp(32px, 4.5vw, 72px); bottom: clamp(112px, 15vh, 140px); display: flex; align-items: center; gap: 18px; transition: opacity 0.6s var(--ease); }
+.cine-ttl .artwork { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); flex: none; }
+.cine-ttl h2 { font-size: clamp(24px, 2.4vw, 34px); font-weight: 800; letter-spacing: -0.05em; line-height: 1.05; max-width: 36vw; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.cine-ttl p { color: var(--fg-2); margin-top: 3px; max-width: 36vw; }
+.cine-tag { display: inline-block; margin-top: 8px; padding: 5px 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.4); color: var(--fg-2); font: 500 11px var(--mono); letter-spacing: 0.06em; }
+
+/* floating pill dock */
+.cine-dock { position: absolute; z-index: 4; left: clamp(32px, 4.5vw, 72px); right: clamp(32px, 4.5vw, 72px); bottom: clamp(16px, 3vh, 28px); height: 76px; border-radius: 38px; display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: center; padding: 0 26px 0 14px; background: rgba(12, 10, 22, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(30px) saturate(1.4); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); transition: opacity 0.6s var(--ease); }
+.cine-l { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.cine-l .artwork { flex: none; box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.08); }
+.cine-l b { display: block; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cine-l span { color: var(--fg-3); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.cine-l > div { min-width: 0; }
+.cine-c { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.cine-c .progress, .cine-c > :last-child { width: 100%; max-width: 520px; }
+.cine-r { display: flex; justify-content: flex-end; align-items: center; gap: 14px; }
+.full.is-cinema.is-idle .cine-dock, .full.is-cinema.is-idle .cine-ttl, .full.is-cinema.is-df .cine-dock { opacity: 0; pointer-events: none; }
+.full.is-cinema.is-idle .cine-pills { opacity: 0; pointer-events: none; }
+
+/* scrim like the design: dark on the left where the type sits, the picture open on the right */
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema::before {
+  background: linear-gradient(90deg, rgba(6, 6, 12, 0.92) 0%, rgba(6, 6, 12, 0.6) 46%, transparent 78%), linear-gradient(0deg, rgba(6, 6, 12, 0.95) 0%, transparent 40%);
+}
+/* lyrics: left column, previous line dim, current line big, next lines soft */
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .full__lyrics {
+  left: clamp(32px, 4.5vw, 72px);
+  right: auto;
+  width: min(62vw, 880px);
+  top: 11%;
+  bottom: clamp(220px, 30vh, 300px);
+}
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics__inner { padding: 14cqh 0 36cqh; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric {
+  justify-content: flex-start;
+  transform-origin: left center;
+  font-size: min(calc(var(--lyric-size) * 1.9), 8.6vh);
+}
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric__text {
+  text-align: left;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+}
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric.is-active { transform: scale(1); text-shadow: 0 10px 50px color-mix(in srgb, var(--accent) 55%, transparent); }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric:not(.is-active) { transform: scale(0.72); opacity: 0.5; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric.is-past { opacity: 0.28; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric:not(.is-active)[data-dist='1'] { opacity: 0.55; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric.is-past[data-dist='1'] { opacity: 0.3; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric:not(.is-active)[data-dist='2'] { opacity: 0.3; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric:not(.is-active)[data-dist='3'] { opacity: 0; }
+:root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyrics__footer { bottom: calc(clamp(16px, 3vh, 28px) + 96px); right: clamp(32px, 4.5vw, 72px); }
