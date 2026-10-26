@@ -5,7 +5,9 @@ import { APP_SCHEME, CH, EV, MEDIA_SCHEME } from '@shared/ipc'
 import type { ScanProgress } from '@shared/library'
 import { LibraryDb, rowToTrack } from './db'
 import { scanFolder } from './scanner'
-import { YtDlp } from './ytdlp'
+import { proxyStream } from './streamProxy'
+import { YtDlp, assetName } from './ytdlp'
+import { YtMusic } from './ytmusic'
 import { DEFAULT_MAX_MB, StreamCache, decodeStreamUrl, isAllowedStreamUrl } from './streamCache'
 
 let db: LibraryDb
@@ -57,7 +59,7 @@ export function initLibrary(): void {
   artDir = join(data, 'art')
 
   const maxMb = Number(JSON.parse(db.kvGetAll()['cache.maxMb'] ?? 'null')) || DEFAULT_MAX_MB
-  cache = new StreamCache(join(data, 'stream-cache'), maxMb * 1024 * 1024, (u) => net.fetch(u))
+  cache = new StreamCache(join(data, 'stream-cache'), maxMb * 1024 * 1024, (u) => proxyStream(u, null))
   void cache.evict()
 
   // vega-media://file/<trackId>  -> the audio file;  vega-media://art/<file> -> cached cover
@@ -72,8 +74,7 @@ export function initLibrary(): void {
       const hit = await cache.lookup(remote)
       if (hit) return cache.serve(hit.path, hit.meta, req.headers.get('range'))
       void cache.fill(remote) // warm the cache for next time; this play is proxied straight through
-      const range = req.headers.get('range')
-      return net.fetch(remote, { headers: range ? { range } : {} })
+      return proxyStream(remote, req.headers.get('range'))
     }
     let path: string | undefined
     if (url.hostname === 'file') path = db.pathOf(target)
@@ -108,7 +109,12 @@ export function initLibrary(): void {
     const r = db.getTrack(String(id))
     return r ? rowToTrack(r) : null
   })
-  const ytdlp = new YtDlp(join(data, 'bin'))
+  // yt-dlp ships inside the app (resources/bin); a copy updated from Sources lives in userData and wins
+  const resources = app.isPackaged ? process.resourcesPath : join(app.getAppPath(), 'resources')
+  const ytdlp = new YtDlp(join(data, 'bin'), [join(resources, 'bin', 'yt-dlp', assetName(process.platform)), join(resources, 'bin', assetName(process.platform))])
+  const ytm = new YtMusic((u, init) => net.fetch(u, init))
+  ipcMain.handle(CH.ytmSearch, (_e, q: string, limit: number, kind?: string) => ytm.search(String(q), Math.min(40, Number(limit) || 20), kind === 'videos' ? 'videos' : 'songs'))
+  ipcMain.handle(CH.ytWarm, (_e, id: string) => ytdlp.warm(String(id)))
   ipcMain.handle(CH.ytStatus, () => ytdlp.status())
   ipcMain.handle(CH.ytInstall, async () => {
     try {

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { chmod, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -74,19 +75,31 @@ export class YtDlp {
   private active = 0
   private queue: Array<() => void> = []
 
+  private urlCache = new Map<string, { url: string; at: number }>()
+  private inflight = new Map<string, Promise<string>>()
+
+  /**
+   * @param binDir     user-writable folder (updates land here and win over the bundled copy)
+   * @param bundled    candidate paths of the copy shipped inside the app, tried in order
+   */
   constructor(
     private readonly binDir: string,
+    private readonly bundled: string[] = [],
     private readonly platform: NodeJS.Platform = process.platform,
-    private readonly run: Runner = spawnRunner
+    private readonly run: Runner = spawnRunner,
+    private readonly now: () => number = Date.now
   ) {}
 
+  /** The newest available binary: a user-updated copy first, then the one bundled with Vega. */
   binaryPath(): string {
-    return join(this.binDir, assetName(this.platform))
+    const own = join(this.binDir, assetName(this.platform))
+    if (existsSync(own)) return own
+    return this.bundled.find((p) => existsSync(p)) ?? own
   }
 
-  /** At most two yt-dlp processes at once. */
+  /** At most three yt-dlp processes at once. */
   private async slot<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.active >= 2) await new Promise<void>((r) => this.queue.push(r))
+    if (this.active >= 3) await new Promise<void>((r) => this.queue.push(r))
     this.active++
     try {
       return await fn()
@@ -123,11 +136,12 @@ export class YtDlp {
     const actual = createHash('sha256').update(data).digest('hex')
     if (!expected || expected.toLowerCase() !== actual) throw new Error('Downloaded file failed its checksum; not installed')
     await mkdir(this.binDir, { recursive: true })
-    const tmp = `${this.binaryPath()}.download`
+    const target = join(this.binDir, name)
+    const tmp = `${target}.download`
     await writeFile(tmp, data)
     if (this.platform !== 'win32') await chmod(tmp, 0o755)
-    await rm(this.binaryPath(), { force: true })
-    await rename(tmp, this.binaryPath())
+    await rm(target, { force: true })
+    await rename(tmp, target)
   }
 
   async search(query: string, limit: number): Promise<YtEntry[]> {
@@ -140,9 +154,12 @@ export class YtDlp {
   }
 
   /** Direct URL of the video picture only (no sound), up to maxHeight: used as the muted animated background in Lyra. */
-  async videoUrl(id: string, maxHeight = 1080): Promise<string> {
-    if (!VIDEO_ID.test(id)) throw new Error('bad video id')
+  videoUrl(id: string, maxHeight = 1080): Promise<string> {
     const h = Math.min(2160, Math.max(240, Math.round(maxHeight)))
+    return this.cached(`v:${id}:${h}`, id, () => this.resolveVideo(id, h))
+  }
+
+  private async resolveVideo(id: string, h: number): Promise<string> {
     const r = await this.slot(() =>
       this.run(
         this.binaryPath(),
@@ -156,8 +173,34 @@ export class YtDlp {
   }
 
   /** Direct audio URL for one video (expires after a few hours, so it is resolved just in time). */
-  async streamUrl(id: string): Promise<string> {
-    if (!VIDEO_ID.test(id)) throw new Error('bad video id')
+  streamUrl(id: string): Promise<string> {
+    return this.cached(`a:${id}`, id, () => this.resolveAudio(id))
+  }
+
+  /** Resolve in the background so the track is ready when someone presses play (errors are ignored). */
+  warm(id: string): void {
+    if (VIDEO_ID.test(id)) void this.streamUrl(id).catch(() => undefined)
+  }
+
+  /** Cached (about 2 h; the URLs live for ~6 h) and de-duplicated while in flight. */
+  private cached(key: string, id: string, load: () => Promise<string>): Promise<string> {
+    if (!VIDEO_ID.test(id)) return Promise.reject(new Error('bad video id'))
+    const hit = this.urlCache.get(key)
+    if (hit && this.now() - hit.at < 2 * 3600_000) return Promise.resolve(hit.url)
+    const running = this.inflight.get(key)
+    if (running) return running
+    const p = load()
+      .then((url) => {
+        this.urlCache.set(key, { url, at: this.now() })
+        if (this.urlCache.size > 300) this.urlCache.delete(this.urlCache.keys().next().value!)
+        return url
+      })
+      .finally(() => this.inflight.delete(key))
+    this.inflight.set(key, p)
+    return p
+  }
+
+  private async resolveAudio(id: string): Promise<string> {
     const r = await this.slot(() =>
       this.run(
         this.binaryPath(),

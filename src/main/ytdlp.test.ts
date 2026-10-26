@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -45,13 +45,13 @@ describe('YtDlp', () => {
   const fetcher = (sums: string): ((u: string) => Promise<Response>) => async (u) => (u.endsWith('SHA2-256SUMS') ? new Response(sums) : new Response(bin))
 
   it('installs after verifying the checksum', async () => {
-    const y = new YtDlp(dir, 'win32', vi.fn() as unknown as Runner)
+    const y = new YtDlp(dir, [], 'win32', vi.fn() as unknown as Runner)
     await y.install(fetcher(`${sha}  yt-dlp.exe\nabc  yt-dlp\n`))
     expect([...(await readFile(y.binaryPath()))]).toEqual([1, 2, 3, 4])
   })
 
   it('refuses a binary that does not match the published checksum', async () => {
-    const y = new YtDlp(dir, 'win32', vi.fn() as unknown as Runner)
+    const y = new YtDlp(dir, [], 'win32', vi.fn() as unknown as Runner)
     await expect(y.install(fetcher(`${'0'.repeat(64)}  yt-dlp.exe\n`))).rejects.toThrow('checksum')
     await expect(y.status()).resolves.toEqual({ installed: false })
   })
@@ -64,7 +64,7 @@ describe('YtDlp', () => {
         ? { stdout: 'https://rr1.googlevideo.com/audio\n', stderr: '', code: 0 }
         : { stdout: JSON.stringify({ entries: [{ id: 'dQw4w9WgXcQ', title: 'T', channel: 'C', duration: 100 }] }), stderr: '', code: 0 }
     }
-    const y = new YtDlp(dir, 'linux', run)
+    const y = new YtDlp(dir, [], 'linux', run)
     expect((await y.search('--evil; rm -rf', 5)).length).toBe(1)
     expect(calls[0]).toEqual(['--ignore-config', '--no-warnings', '--flat-playlist', '-J', '--', 'ytsearch5:evil; rm -rf'])
     expect(await y.streamUrl('dQw4w9WgXcQ')).toBe('https://rr1.googlevideo.com/audio')
@@ -78,15 +78,47 @@ describe('YtDlp', () => {
       calls.push(args)
       return { stdout: 'https://rr1.googlevideo.com/video\n', stderr: '', code: 0 }
     }
-    const y = new YtDlp(dir, 'linux', run)
+    const y = new YtDlp(dir, [], 'linux', run)
     expect(await y.videoUrl('dQw4w9WgXcQ', 720)).toBe('https://rr1.googlevideo.com/video')
     expect(calls[0]![calls[0]!.indexOf('-f') + 1]).toContain('height<=720')
     expect(calls[0]!.slice(-2)).toEqual(['--', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'])
     await expect(y.videoUrl('bad id')).rejects.toThrow('bad video id')
   })
 
+  it('caches resolved urls, de-duplicates concurrent resolves, and warms ahead', async () => {
+    let n = 0
+    let t = 0
+    const run: Runner = async () => {
+      n++
+      await new Promise((r) => setTimeout(r, 5))
+      return { stdout: `https://rr1.googlevideo.com/a${n}
+`, stderr: '', code: 0 }
+    }
+    const y = new YtDlp(dir, [], 'linux', run, () => t)
+    const [a, b] = await Promise.all([y.streamUrl('dQw4w9WgXcQ'), y.streamUrl('dQw4w9WgXcQ')])
+    expect(a).toBe(b)
+    expect(n).toBe(1)
+    y.warm('aaaaaaaaaaa')
+    await new Promise((r) => setTimeout(r, 20))
+    expect(await y.streamUrl('aaaaaaaaaaa')).toContain('/a2')
+    expect(n).toBe(2)
+    t = 3 * 3600_000
+    await y.streamUrl('dQw4w9WgXcQ')
+    expect(n).toBe(3)
+  })
+
+  it('prefers a user-updated binary over the bundled one', async () => {
+    const bundled = join(dir, 'bundled.exe')
+    await writeFile(bundled, 'x')
+    const y = new YtDlp(join(dir, 'user'), [bundled], 'win32', vi.fn() as unknown as Runner)
+    expect(y.binaryPath()).toBe(bundled)
+    await y.install(fetcher(`${sha}  yt-dlp.exe
+`))
+    expect(y.binaryPath()).toBe(join(dir, 'user', 'yt-dlp.exe'))
+  })
+
   it('surfaces yt-dlp errors', async () => {
     const run: Runner = async () => ({ stdout: '', stderr: 'ERROR: Sign in to confirm you are not a bot', code: 1 })
-    await expect(new YtDlp(dir, 'linux', run).streamUrl('dQw4w9WgXcQ')).rejects.toThrow('not a bot')
+    await expect(new YtDlp(dir, [], 'linux', run).streamUrl('dQw4w9WgXcQ')).rejects.toThrow('not a bot')
   })
 })

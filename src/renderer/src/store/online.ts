@@ -6,59 +6,42 @@ interface OnlineState {
   audius: boolean
   archive: boolean
   radio: boolean
-  ytdlp: boolean
-  piped: boolean
-  pipedInstances: string
+  /** YouTube Music catalogue (desktop; on by default) */
+  ytm: boolean
   jamendoClientId: string
   setAudius: (on: boolean) => void
   setArchive: (on: boolean) => void
   setRadio: (on: boolean) => void
-  setYtdlp: (on: boolean) => void
-  setPiped: (on: boolean) => void
-  setPipedInstances: (v: string) => void
+  setYtm: (on: boolean) => void
   setJamendoClientId: (id: string) => void
 }
 
-const initial = { audius: load<boolean>('online.audius', true), archive: load<boolean>('online.archive', true), radio: load<boolean>('online.radio', true), ytdlp: load<boolean>('online.ytdlp', false), piped: load<boolean>('online.piped', false), pipedInstances: load<string>('online.pipedInstances', ''), jamendoClientId: load<string>('online.jamendoClientId', '') }
+const initial = {
+  audius: load<boolean>('online.audius', true),
+  archive: load<boolean>('online.archive', true),
+  radio: load<boolean>('online.radio', true),
+  ytm: load<boolean>('online.ytm', true),
+  jamendoClientId: load<string>('online.jamendoClientId', '')
+}
 applyOnlineSources(initial)
 
-export const useOnline = create<OnlineState>((set, get) => ({
-  ...initial,
-  setAudius: (audius) => {
-    save('online.audius', audius)
-    set({ audius })
-    applyOnlineSources(get())
-  },
-  setArchive: (archive) => {
-    save('online.archive', archive)
-    set({ archive })
-    applyOnlineSources(get())
-  },
-  setRadio: (radio) => {
-    save('online.radio', radio)
-    set({ radio })
-    applyOnlineSources(get())
-  },
-  setYtdlp: (ytdlp) => {
-    save('online.ytdlp', ytdlp)
-    set({ ytdlp })
-    applyOnlineSources(get())
-  },
-  setPiped: (piped) => {
-    save('online.piped', piped)
-    set({ piped })
-    applyOnlineSources(get())
-  },
-  setPipedInstances: (v) => {
-    const pipedInstances = v.trim()
-    save('online.pipedInstances', pipedInstances)
-    set({ pipedInstances })
-    applyOnlineSources(get())
-  },
-  setJamendoClientId: (id) => {
-    const jamendoClientId = id.trim()
-    save('online.jamendoClientId', jamendoClientId)
-    set({ jamendoClientId })
+export const useOnline = create<OnlineState>((set, get) => {
+  const toggle = (key: 'audius' | 'archive' | 'radio' | 'ytm') => (on: boolean): void => {
+    save(`online.${key}`, on)
+    set({ [key]: on } as Partial<OnlineState>)
     applyOnlineSources(get())
   }
-}))
+  return {
+    ...initial,
+    setAudius: toggle('audius'),
+    setArchive: toggle('archive'),
+    setRadio: toggle('radio'),
+    setYtm: toggle('ytm'),
+    setJamendoClientId: (id) => {
+      const jamendoClientId = id.trim()
+      save('online.jamendoClientId', jamendoClientId)
+      set({ jamendoClientId })
+      applyOnlineSources(get())
+    }
+  }
+})

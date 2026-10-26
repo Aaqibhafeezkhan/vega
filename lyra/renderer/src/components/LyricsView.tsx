@@ -13,7 +13,6 @@ import { useSettings } from '@/store/settings'
 import { useUi } from '@/store/ui'
 import { useControlsLocked } from './Controls'
 import { Icon, type IconName } from './Icon'
-import { ShareCard } from './ShareCard'
 
 const RESUME_AFTER_MS = 6000
 
@@ -113,7 +112,6 @@ function SyncedLyrics({ result, variant }: { result: LyricsResult; variant: 'min
   const { locked } = useControlsLocked()
   const seek = usePlayer((s) => s.seek)
   const offset = useLyricOffset()
-  const toast = useUi((s) => s.toast)
 
   const scrollToActive = useCallback(
     (instant = false) => {
@@ -167,19 +165,6 @@ function SyncedLyrics({ result, variant }: { result: LyricsResult; variant: 'min
     resumeTimer.current = setTimeout(resume, RESUME_AFTER_MS)
   }, [resume])
 
-  const save = useCallback(
-    (line: LyricLine) => {
-      const t = usePlayer.getState().snapshot?.track
-      if (!t || !line.text) return
-      void window.lyra.moments
-        .add({ trackId: t.id, title: t.title, artist: t.artists.join(', '), artworkUrl: t.artworkUrl, text: line.text, timeMs: line.timeMs })
-        .then(() => toast('Saved to your moments'))
-    },
-    [toast]
-  )
-
-  const [shareIndex, setShareIndex] = useState<number | null>(null)
-
   const seekTo = useCallback(
     (line: LyricLine) => {
       if (locked) return
@@ -213,8 +198,6 @@ function SyncedLyrics({ result, variant }: { result: LyricsResult; variant: 'min
               nextTime={lines[i + 1]?.timeMs}
               canSeek={!locked}
               onSeek={seekTo}
-              onSave={save}
-              onShare={(l) => setShareIndex(lines.indexOf(l))}
             />
           ))}
         </div>
@@ -235,7 +218,6 @@ function SyncedLyrics({ result, variant }: { result: LyricsResult; variant: 'min
           </motion.button>
         )}
       </AnimatePresence>
-      {shareIndex !== null && <ShareCard lines={lines} index={Math.max(0, shareIndex)} onClose={() => setShareIndex(null)} />}
     </>
   )
 }
@@ -247,12 +229,10 @@ interface RowProps {
   nextTime: number | undefined
   canSeek: boolean
   onSeek(l: LyricLine): void
-  onSave(l: LyricLine): void
-  onShare(l: LyricLine): void
   ref: React.Ref<HTMLDivElement>
 }
 
-const LyricRow = memo(function LyricRow({ line, showRomanization, dist, nextTime, canSeek, onSeek, onSave, onShare, ref }: RowProps) {
+const LyricRow = memo(function LyricRow({ line, showRomanization, dist, nextTime, canSeek, onSeek, ref }: RowProps) {
   const isActive = dist === 0
   const d = Math.min(Math.abs(dist), 6)
   const gap = line.text === ''
@@ -284,12 +264,6 @@ const LyricRow = memo(function LyricRow({ line, showRomanization, dist, nextTime
                 {romanize(line.text)}
               </span>
             )}
-          </button>
-          <button type="button" className="lyric__save" aria-label="Save this line to your moments" title="Save line" onClick={() => onSave(line)}>
-            <Icon name="bookmark" size={14} />
-          </button>
-          <button type="button" className="lyric__save" aria-label="Share this line as a card" title="Share as a card" onClick={() => onShare(line)}>
-            <Icon name="share" size={14} />
           </button>
         </>
       )}

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import './store/auth' // starts session restore and background sync
 import { CommandPalette } from './components/CommandPalette'
 import { EqPanel } from './components/EqPanel'
+import { warmAudioOutput } from './lib/audioWarmup'
 import { resumeEq } from './lib/eq'
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
@@ -45,6 +46,7 @@ export function App() {
 
   useEffect(() => {
     void useCatalog.getState().refresh()
+    warmAudioOutput()
   }, [])
 
   // Background enrichment: learn genres for artists we know nothing about (1 request/s, cached).

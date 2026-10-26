@@ -139,6 +139,12 @@ export class SourceRegistry {
     return shelves
   }
 
+  /** Ask the track's source to prepare it in the background (next in queue, top search results). */
+  warm(track: Track): void {
+    const slot = this.slots.get(track.ref.source)
+    if (slot && slot.downUntil <= this.now()) slot.provider.warm?.(track.ref.id)
+  }
+
   /** Resolve a track; if its own source fails, try other sources offering the same song (`alternates`). */
   async resolve(track: Track, alternates: Track[] = []): Promise<{ stream: StreamSource; ref: TrackRef }> {
     const same = alternates.filter((a) => dedupeKey(a) === dedupeKey(track) && a.ref.source !== track.ref.source)

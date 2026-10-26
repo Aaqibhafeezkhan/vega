@@ -11,3 +11,5 @@ dist-web
 .vercel
 src/renderer/public/lyra
 release
+scratch
+resources/bin

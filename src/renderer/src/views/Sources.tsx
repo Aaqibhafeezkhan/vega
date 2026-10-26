@@ -21,55 +21,43 @@ function YoutubePanel() {
   const [status, setStatus] = useState<{ installed: boolean; version?: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
-  const [inst, setInst] = useState(online.pipedInstances)
   const refresh = useCallback(() => void api?.status().then(setStatus), [api])
   useEffect(refresh, [refresh])
   if (!api) return null
   return (
     <>
-      <h2 className="section">YouTube sources (desktop, optional)</h2>
-      <p className="muted small" style={{ marginBottom: 12 }}>
-        These find music on YouTube. They are off by default, depend on third-party tools that can break at any time, and YouTube&apos;s terms restrict this kind of use, so enabling them is your call.
-      </p>
       <div className="panel toggle-row">
         <div className="grow">
-          <div className="row-title">yt-dlp</div>
-          <div className="row-sub">
-            {status?.installed ? `Installed (${status.version}).` : 'Needs your own copy of yt-dlp. Vega can download the official release and verify its checksum.'}
-            {msg && <span className={msg.startsWith('Installed') ? 'ok' : 'err'}> {msg}</span>}
-          </div>
+          <div className="row-title">YouTube Music</div>
+          <div className="row-sub">The main catalogue: Hindi, Punjabi, Tamil, Telugu and international songs. Fast search, built in.</div>
         </div>
-        {!status?.installed && (
-          <button
-            className="pill ghost"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true)
-              setMsg(null)
-              const r = await api.install()
-              setMsg(r.ok ? 'Installed.' : (r.error ?? 'Install failed'))
-              setBusy(false)
-              refresh()
-            }}
-          >
-            {busy ? 'Downloading…' : 'Install yt-dlp'}
-          </button>
-        )}
         <label className="switch">
-          <input type="checkbox" checked={online.ytdlp} disabled={!status?.installed} onChange={(e) => online.setYtdlp(e.target.checked)} />
+          <input type="checkbox" checked={online.ytm} onChange={(e) => online.setYtm(e.target.checked)} />
           <span />
         </label>
       </div>
       <div className="panel toggle-row">
         <div className="grow">
-          <div className="row-title">Piped</div>
-          <div className="row-sub">Public Piped servers; no install needed. Optional comma-separated list of your own instances (https only).</div>
+          <div className="row-title">Playback engine (yt-dlp)</div>
+          <div className="row-sub">
+            {status?.installed ? `Included with Vega · version ${status.version}.` : 'Not found.'} Update it if YouTube playback stops working.
+            {msg && <span className={msg.startsWith('Updated') ? 'ok' : 'err'}> {msg}</span>}
+          </div>
         </div>
-        <input className="key-input" placeholder="default instances" value={inst} spellCheck={false} onChange={(e) => setInst(e.target.value)} onBlur={() => online.setPipedInstances(inst)} />
-        <label className="switch">
-          <input type="checkbox" checked={online.piped} onChange={(e) => online.setPiped(e.target.checked)} />
-          <span />
-        </label>
+        <button
+          className="pill ghost"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true)
+            setMsg(null)
+            const r = await api.install()
+            setMsg(r.ok ? 'Updated.' : (r.error ?? 'Update failed'))
+            setBusy(false)
+            refresh()
+          }}
+        >
+          {busy ? 'Updating…' : 'Update'}
+        </button>
       </div>
     </>
   )

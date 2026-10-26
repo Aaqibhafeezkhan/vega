@@ -44,7 +44,6 @@ export const usePlayer = create<PlayerStore>((set, get) => ({
         set({ liked: null, queue: null })
         const id = snapshot.track?.id
         if (id) void api.player.isLiked(id).then((v) => get().snapshot?.track?.id === id && set({ liked: v }))
-        if (useUi.getState().panel === 'queue') void get().refreshQueue()
       }
     })
     const [status, snapshot] = await Promise.all([api.spotify.getStatus(), api.spotify.getSnapshot()])

@@ -1,5 +1,5 @@
 import { thumbCrop, type DecodedImage } from '../core/background/bars'
-import { rankVideos } from '../core/background/rank'
+import { pickVideo } from './pickVideo'
 import { createBackgroundResolver, type SongBg } from '../core/background/resolver'
 import { youtube } from '../core/background/youtube'
 import { lyricsService } from '../core/lyrics/service'
@@ -59,8 +59,20 @@ const settingsStore = new LocalStore<Settings>('settings', {
   ...DEFAULT_SETTINGS,
   onboarded: true, // Vega has its own first-run; no Lyra welcome card
   defaultMode: 'mini',
-  backgroundInMini: true
+  backgroundInMini: true,
+  // Windows reports "reduce motion" whenever animations are switched off for performance, which silently disabled every
+  // background video. Videos are core to this player, so it does not follow the OS flag unless the user turns it on.
+  reducedMotion: 'off'
 })
+try {
+  if (!localStorage.getItem('vega.motionV1')) {
+    localStorage.setItem('vega.motionV1', '1')
+    const cur = settingsStore.get()
+    if (cur.reducedMotion === 'system') settingsStore.set({ ...cur, reducedMotion: 'off' })
+  }
+} catch {
+  /* storage unavailable */
+}
 const settingsChanged = emitter<Settings>()
 
 function sanitize(s: Settings): Settings {
@@ -157,11 +169,7 @@ function ytdlpVideoSpec(track: Track): Promise<BackgroundSpec | null> {
       if (!v || !(await v.available())) return null
       const artist = track.artists[0] ?? ''
       const found = await v.search(`${artist} ${track.title} official video`)
-      const ranked = rankVideos(
-        { title: track.title, artist, durationMs: track.durationMs },
-        found.map((f) => ({ videoId: f.videoId, title: f.title, channel: f.channel, durationSec: f.durationSec, embeddable: true }))
-      )
-      const best = ranked.find((r) => r.acceptable)
+      const best = pickVideo({ title: track.title, artists: track.artists, durationMs: track.durationMs }, found)
       if (!best) return null
       return { kind: 'preview', url: await v.url(best.videoId), title: best.title, width: 1920 } satisfies BackgroundSpec
     })().catch(() => null)
@@ -217,7 +225,7 @@ export const vegaApi: LyraApi = {
       return next
     },
     reset: async () => {
-      const next = sanitize({ ...DEFAULT_SETTINGS, defaultMode: 'mini', backgroundInMini: true })
+      const next = sanitize({ ...DEFAULT_SETTINGS, defaultMode: 'mini', backgroundInMini: true, reducedMotion: 'off' })
       settingsStore.set(next)
       settingsChanged.emit(next)
       return next

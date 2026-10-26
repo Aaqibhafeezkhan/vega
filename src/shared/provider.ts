@@ -32,4 +32,6 @@ export interface SourceProvider {
   getTrack(id: string): Promise<Track | null>
   resolve(id: string): Promise<StreamSource>
   browse?(): Promise<Shelf[]>
+  /** Optional: get a track ready (resolve its stream) so pressing play is instant. */
+  warm?(id: string): void
 }

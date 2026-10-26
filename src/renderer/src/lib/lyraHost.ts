@@ -144,7 +144,7 @@ export const vegaHost: VegaHost = {
   video: window.vega
     ? {
         available: async () => (await window.vega!.ytdlp.status()).installed,
-        search: async (q) => (await window.vega!.ytdlp.search(q, 6)).map((e) => ({ videoId: e.id, title: e.title, channel: e.channel, durationSec: e.durationSec })),
+        search: async (q) => (await window.vega!.ytm.search(q, 8, 'videos')).map((e) => ({ videoId: e.videoId, title: e.title, channel: e.artists[0] ?? '', durationSec: e.durationSec })),
         url: async (id) => toStreamUrl(await window.vega!.ytdlp.video(id, 1080))
       }
     : undefined,

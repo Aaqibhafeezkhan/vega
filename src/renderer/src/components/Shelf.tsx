@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Track } from '@shared/types'
 import { usePlayer } from '@/store/player'
+import { warmOnHover } from '@/lib/sources'
 import { Cover } from './Cover'
 import { Icon } from './Icon'
 
@@ -45,7 +46,7 @@ export function Shelf({ title, subtitle, tracks, live = false }: { title: string
         {tracks.map((t, i) => {
           const active = current?.ref.id === t.ref.id && current.ref.source === t.ref.source
           return (
-            <button key={`${t.ref.source}:${t.ref.id}-${i}`} className={`card${active ? ' active' : ''}`} style={{ ['--i' as string]: Math.min(i, 10) }} onClick={() => playTracks(tracks, i)}>
+            <button key={`${t.ref.source}:${t.ref.id}-${i}`} className={`card${active ? ' active' : ''}`} style={{ ['--i' as string]: Math.min(i, 10) }} onClick={() => playTracks(tracks, i)} {...warmOnHover(t)}>
               <div className="card-cover">
                 <Cover track={t} fill radius={16} />
                 <span className="card-play" aria-hidden>

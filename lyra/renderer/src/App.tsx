@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { Backdrop } from '@/components/Backdrop'
-import { CompactWidget } from '@/components/CompactWidget'
 import { FullscreenPlayer } from '@/components/FullscreenPlayer'
 import { MiniPlayer } from '@/components/MiniPlayer'
-import { ResizeGrip } from '@/components/ResizeGrip'
 import { SidePanel } from '@/components/SidePanel'
 import { Toasts } from '@/components/Toasts'
-import { Welcome } from '@/components/Welcome'
 import { useArtwork, usePalette } from '@/hooks/useArtwork'
 import { useReducedMotion } from '@/hooks/useMotion'
-import { useNearby } from '@/store/nearby'
 import { NEUTRAL_PALETTE } from '@/lib/palette'
 import { fillWindow, isAnimating, runTransition, shell } from '@/lib/shell'
 import { useLyrics } from '@/store/lyrics'
@@ -23,13 +19,11 @@ function useBoot(): boolean {
   const [ready, setReady] = useState(false)
   useEffect(() => {
     let off: Array<() => void> = []
-    let offNearby: (() => void) | undefined
     void (async () => {
       const api = window.lyra
       await useSettings.getState().init()
       await usePlayer.getState().init()
       useLyrics.getState().init()
-      if (document.documentElement.dataset.platform !== 'android') offNearby = useNearby.getState().init()
       useUi.getState().setMode(await api.window.getMode())
       off = [
         api.update.onState((u) => {
@@ -58,7 +52,6 @@ function useBoot(): boolean {
     })()
     return () => {
       off.forEach((f) => f())
-      offNearby?.()
     }
   }, [])
   return ready
@@ -194,17 +187,13 @@ export default function App() {
             >
               {mode === 'full' ? (
                 <FullscreenPlayer />
-              ) : mode === 'mini' ? (
-                <MiniPlayer />
               ) : (
-                <CompactWidget minimal={mode === 'minimal'} />
+                <MiniPlayer />
               )}
             </motion.div>
           </AnimatePresence>
           {(mode === 'mini' || mode === 'full') && <SidePanel />}
-          {!onboarded && (mode === 'mini' || mode === 'full') && <Welcome />}
           <Toasts />
-          {(mode === 'mini' || mode === 'compact' || mode === 'minimal') && <ResizeGrip />}
         </motion.div>
       </div>
     </MotionConfig>

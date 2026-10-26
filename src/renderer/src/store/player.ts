@@ -83,6 +83,9 @@ export const usePlayer = create<PlayerState>((set, get) => {
       if (token !== loadToken) return
       session = { track, startedAt: Date.now(), listenedMs: 0, lastTick: null }
       set({ loading: false, playing: true })
+      // resolve the next track in the background so skipping is instant
+      const nextTrack = get().queue[get().index + 1]
+      if (nextTrack) sources.warm(nextTrack)
       updateMediaSession(track)
     } catch (err) {
       if (token !== loadToken) return

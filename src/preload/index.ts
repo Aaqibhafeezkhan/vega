@@ -41,8 +41,10 @@ const api: VegaDesktopApi = {
     install: () => invoke(CH.ytInstall),
     search: (q, limit) => invoke(CH.ytSearch, q, limit),
     resolve: (id) => invoke(CH.ytResolve, id),
-    video: (id, maxHeight) => invoke(CH.ytVideo, id, maxHeight)
+    video: (id, maxHeight) => invoke(CH.ytVideo, id, maxHeight),
+    warm: (id) => invoke(CH.ytWarm, id)
   },
+  ytm: { search: (q, limit, kind) => invoke(CH.ytmSearch, q, limit, kind) },
   kv: {
     getAll: () => invoke(CH.kvGetAll),
     set: (key, value) => invoke(CH.kvSet, key, value)

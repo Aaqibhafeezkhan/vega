@@ -8,7 +8,7 @@ import { useLibrary } from '@/store/library'
 import { useMeta } from '@/store/meta'
 import { useUi } from '@/store/ui'
 
-const SOURCE_NAMES: Record<string, string> = { local: 'My music', audius: 'Audius', jamendo: 'Jamendo', archive: 'Internet Archive', mock: 'Demo', ytdlp: 'YouTube (yt-dlp)', piped: 'YouTube (Piped)' }
+const SOURCE_NAMES: Record<string, string> = { local: 'My music', audius: 'Audius', jamendo: 'Jamendo', archive: 'Internet Archive', mock: 'Demo', ytm: 'YouTube Music' }
 
 export function Search() {
   const query = useUi((s) => s.query)
@@ -41,6 +41,8 @@ export function Search() {
           if (ctl.signal.aborted) return
           setRaw(t)
           useMeta.getState().request(t)
+          // get the first few results ready: YouTube streams take a few seconds to resolve, so do it before the click
+          t.filter((x) => x.ref.source === 'ytm').slice(0, 2).forEach((x) => sources.warm(x))
           setBusy(false)
         })
         .catch(() => !ctl.signal.aborted && setBusy(false))

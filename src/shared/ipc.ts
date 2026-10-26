@@ -19,7 +19,9 @@ export const CH = {
   ytInstall: 'ytdlp:install',
   ytSearch: 'ytdlp:search',
   ytResolve: 'ytdlp:resolve',
-  ytVideo: 'ytdlp:video'
+  ytVideo: 'ytdlp:video',
+  ytWarm: 'ytdlp:warm',
+  ytmSearch: 'ytm:search'
 } as const
 
 export const EV = {
@@ -58,6 +60,10 @@ export interface VegaDesktopApi {
     search(q: string, limit: number): Promise<{ id: string; title: string; channel: string; durationSec: number }[]>
     resolve(id: string): Promise<string>
     video(id: string, maxHeight?: number): Promise<string>
+    warm(id: string): Promise<void>
+  }
+  ytm: {
+    search(q: string, limit: number, kind?: 'songs' | 'videos'): Promise<{ videoId: string; title: string; artists: string[]; album?: string; durationSec: number; thumbnail?: string }[]>
   }
   kv: {
     getAll(): Promise<Record<string, string>>

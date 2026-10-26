@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { refKey, type Track } from '@shared/types'
 import { fmtTime } from '@/lib/format'
 import { radioFrom } from '@/lib/recommender'
+import { warmOnHover } from '@/lib/sources'
 import { useLibrary } from '@/store/library'
 import { usePlayer } from '@/store/player'
 import { useUi } from '@/store/ui'
 import { Cover } from './Cover'
 import { Icon } from './Icon'
 
-const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive', radio: 'Radio', local: 'Local', ytdlp: 'YouTube', piped: 'YouTube' }
+const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive', radio: 'Radio', local: 'Local', ytm: 'YT Music' }
 
 interface Props {
   track: Track
@@ -31,7 +32,7 @@ export function TrackRow({ track, index, onPlay, extra }: Props) {
   const live = track.durationMs === 0
 
   return (
-    <div className={`row${active ? ' active' : ''}`} onDoubleClick={onPlay}>
+    <div className={`row${active ? ' active' : ''}`} onDoubleClick={onPlay} {...warmOnHover(track)}>
       <button className="row-idx" onClick={onPlay} aria-label={`Play ${track.title}`}>
         {active && playing ? <span className="eq" /> : <span className="num">{index !== undefined ? index + 1 : ''}</span>}
         <span className="hover-play">

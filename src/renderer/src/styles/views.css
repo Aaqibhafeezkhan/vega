@@ -84,6 +84,7 @@
 .row .like { opacity: 0; }
 .row:hover .like, .row .like.on { opacity: 1; }
 .src { display: inline-block; margin-right: 8px; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: 1px; background: var(--surface-2); color: var(--text-2); }
+.src-ytm { background: rgba(255, 70, 90, 0.16); color: #ff9aa6; }
 .src-audius { background: rgba(190, 100, 255, 0.18); color: #d9a6ff; }
 .src-jamendo { background: rgba(255, 120, 100, 0.18); color: #ffa497; }
 .src-archive { background: rgba(255, 200, 100, 0.16); color: #ffd58a; }

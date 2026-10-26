@@ -5,8 +5,7 @@ import { createAudiusProvider } from '@providers/audius'
 import { createJamendoProvider } from '@providers/jamendo'
 import { createArchiveProvider } from '@providers/archive'
 import { createRadioProvider } from '@providers/radio'
-import { createPipedProvider } from '@providers/piped'
-import { createYtDlpProvider } from '@providers/ytdlp'
+import { createYtmProvider } from '@providers/ytm'
 import { backend } from './backend'
 
 /**
@@ -31,12 +30,10 @@ export function setDemoEnabled(on: boolean): void {
 }
 
 /** Registers/unregisters online providers to match settings. Jamendo only exists once the user supplies a client id. */
-export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; radio: boolean; ytdlp: boolean; piped: boolean; pipedInstances: string; jamendoClientId: string }): void {
-  // YouTube-derived sources are opt-in and desktop only
-  if (cfg.ytdlp && window.vega) sources.register(createYtDlpProvider(window.vega.ytdlp), 80)
-  else sources.unregister('ytdlp')
-  if (cfg.piped && window.vega) sources.register(createPipedProvider({ instances: cfg.pipedInstances.split(/[\s,]+/).filter(Boolean) }), 85)
-  else sources.unregister('piped')
+export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; radio: boolean; ytm: boolean; jamendoClientId: string }): void {
+  // YouTube Music (desktop): the main catalogue, on by default
+  if (cfg.ytm && window.vega) sources.register(createYtmProvider(window.vega), 30)
+  else sources.unregister('ytm')
   if (cfg.radio) sources.register(radio, 70)
   else sources.unregister('radio')
   if (cfg.archive) sources.register(createArchiveProvider(), 55)
@@ -45,4 +42,18 @@ export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; rad
   else sources.unregister('audius')
   if (cfg.jamendoClientId) sources.register(createJamendoProvider({ clientId: cfg.jamendoClientId }), 60)
   else sources.unregister('jamendo')
+}
+
+const hoverTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+/** Pointer is resting on a track: after a moment, get it ready so a click starts playing immediately. */
+export function warmOnHover(track: import('@shared/types').Track): { onMouseEnter: () => void; onMouseLeave: () => void } {
+  const key = `${track.ref.source}:${track.ref.id}`
+  return {
+    onMouseEnter: () => {
+      clearTimeout(hoverTimers.get(key))
+      hoverTimers.set(key, setTimeout(() => sources.warm(track), 140))
+    },
+    onMouseLeave: () => clearTimeout(hoverTimers.get(key))
+  }
 }
