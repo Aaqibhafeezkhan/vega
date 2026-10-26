@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vega design A — Aurora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#07080d; --glass:rgba(255,255,255,.06); --glass2:rgba(255,255,255,.1); --line:rgba(255,255,255,.09); --text:#f5f6fb; --mute:rgba(245,246,251,.58); --faint:rgba(245,246,251,.34); --a:#ff8a5b; --b:#7c5cff; --c:#2ee6c5; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:#000; color:var(--text); font-family:'Inter Tight',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .screen { position:relative; width:1440px; height:900px; margin:0 auto 40px; overflow:hidden; background:var(--bg); border-radius:24px; isolation:isolate; }
+  .label { text-align:center; color:#888; font:600 13px 'Inter Tight'; letter-spacing:.14em; text-transform:uppercase; padding:36px 0 14px; }
+  /* aurora field */
+  .aurora { position:absolute; inset:-20%; z-index:-1; filter:blur(70px) saturate(1.3); }
+  .aurora i { position:absolute; border-radius:50%; mix-blend-mode:screen; opacity:.55; animation:drift 18s ease-in-out infinite alternate; }
+  .aurora i:nth-child(1){ width:760px;height:760px;left:4%;top:-8%;background:radial-gradient(circle,#ff6a3d,transparent 66%); }
+  .aurora i:nth-child(2){ width:700px;height:700px;right:2%;top:10%;background:radial-gradient(circle,#7c5cff,transparent 66%);animation-delay:-6s; }
+  .aurora i:nth-child(3){ width:620px;height:620px;left:34%;bottom:-18%;background:radial-gradient(circle,#18d4b0,transparent 66%);animation-delay:-11s; }
+  @keyframes drift { to { transform:translate(60px,-40px) scale(1.12); } }
+  .grain { position:absolute; inset:0; z-index:-1; opacity:.07; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  /* layout */
+  .rail { position:absolute; left:20px; top:20px; bottom:116px; width:76px; border-radius:26px; background:var(--glass); border:1px solid var(--line); backdrop-filter:blur(30px); display:flex; flex-direction:column; align-items:center; padding:18px 0; gap:6px; }
+  .logo { width:42px; height:42px; border-radius:14px; background:conic-gradient(from 210deg,#ff8a5b,#7c5cff,#2ee6c5,#ff8a5b); display:grid; place-items:center; margin-bottom:14px; box-shadow:0 8px 30px rgba(124,92,255,.5); }
+  .logo b { width:18px; height:18px; background:#fff; clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%); }
+  .ni { width:50px; height:50px; border-radius:16px; display:grid; place-items:center; color:var(--mute); font-size:20px; position:relative; }
+  .ni.on { color:#fff; background:var(--glass2); box-shadow:inset 0 0 0 1px var(--line); }
+  .ni.on::before { content:''; position:absolute; left:-20px; width:4px; height:22px; border-radius:4px; background:linear-gradient(var(--a),var(--b)); box-shadow:0 0 14px var(--a); }
+  .main { position:absolute; left:116px; right:20px; top:20px; bottom:116px; border-radius:30px; overflow:hidden; background:rgba(8,9,15,.45); border:1px solid var(--line); backdrop-filter:blur(30px); }
+  .top { display:flex; align-items:center; gap:16px; padding:22px 34px 0; }
+  .search { flex:1; max-width:520px; height:46px; border-radius:23px; background:var(--glass); border:1px solid var(--line); display:flex; align-items:center; padding:0 18px; color:var(--faint); font-size:15px; gap:10px; }
+  .chips { display:flex; gap:8px; margin-left:auto; }
+  .chip { padding:9px 16px; border-radius:20px; font-size:13px; font-weight:600; background:var(--glass); border:1px solid var(--line); color:var(--mute); }
+  .chip.on { background:#fff; color:#0a0b12; border-color:#fff; }
+  .scroll { padding:28px 34px 40px; }
+  .eyebrow { font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); font-weight:700; }
+  h1 { font-family:'Instrument Serif',serif; font-weight:400; font-size:84px; line-height:.95; letter-spacing:-.02em; margin:8px 0 26px; }
+  h1 em { font-style:italic; background:linear-gradient(100deg,var(--a),#ffd1a8 40%,var(--c)); -webkit-background-clip:text; color:transparent; }
+  .hero { display:grid; grid-template-columns:1.15fr 1fr; gap:22px; height:300px; }
+  .feature { position:relative; border-radius:30px; overflow:hidden; padding:30px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(135deg,#ff6a3d 0%,#c2306a 52%,#4a2bb8 100%); box-shadow:0 30px 80px rgba(194,48,106,.35); }
+  .feature::after { content:''; position:absolute; right:-60px; top:-60px; width:360px; height:360px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.35),transparent 65%); }
+  .feature h2 { font-family:'Instrument Serif',serif; font-weight:400; font-size:54px; line-height:1; position:relative; }
+  .feature p { color:rgba(255,255,255,.8); margin:8px 0 18px; position:relative; max-width:360px; font-size:15px; }
+  .btns { display:flex; gap:10px; position:relative; }
+  .btn { height:46px; padding:0 22px; border-radius:23px; font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px; }
+  .btn.p { background:#fff; color:#12131c; } .btn.g { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.25); backdrop-filter:blur(10px); }
+  .stackart { position:absolute; right:34px; bottom:26px; width:210px; height:210px; }
+  .stackart i { position:absolute; width:150px; height:150px; border-radius:26px; box-shadow:0 20px 50px rgba(0,0,0,.45); }
+  .stackart i:nth-child(1){ left:0; top:30px; transform:rotate(-10deg); background:linear-gradient(135deg,#ffd166,#ef476f); }
+  .stackart i:nth-child(2){ left:46px; top:0; transform:rotate(4deg); background:linear-gradient(135deg,#06d6a0,#118ab2); z-index:2; }
+  .stackart i:nth-child(3){ left:80px; top:44px; transform:rotate(14deg); background:linear-gradient(135deg,#8338ec,#3a86ff); }
+  .quick { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .q { display:flex; align-items:center; gap:14px; height:70px; border-radius:20px; background:var(--glass); border:1px solid var(--line); padding-right:16px; overflow:hidden; font-weight:600; }
+  .q .art { width:70px; height:70px; flex:none; } .q small { display:block; color:var(--mute); font-weight:500; font-size:12.5px; margin-top:2px; }
+  .sec { display:flex; justify-content:space-between; align-items:flex-end; margin:34px 0 14px; }
+  .sec h3 { font-family:'Instrument Serif',serif; font-weight:400; font-size:34px; letter-spacing:-.01em; }
+  .cards { display:flex; gap:18px; }
+  .card { width:190px; flex:none; } .card .cv { width:190px; height:190px; border-radius:26px; box-shadow:0 18px 40px rgba(0,0,0,.45); position:relative; overflow:hidden; }
+  .card .cv::after { content:''; position:absolute; inset:0; background:linear-gradient(160deg,rgba(255,255,255,.22),transparent 45%,rgba(0,0,0,.25)); }
+  .card b { display:block; margin-top:12px; font-size:15px; } .card span { color:var(--mute); font-size:13px; }
+  /* dock */
+  .dock { position:absolute; left:20px; right:20px; bottom:20px; height:80px; border-radius:30px; background:rgba(14,15,24,.72); border:1px solid var(--line); backdrop-filter:blur(30px); display:grid; grid-template-columns:1fr 1.5fr 1fr; align-items:center; padding:0 22px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .dock .np { display:flex; align-items:center; gap:14px; } .dock .np i { width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg,#ff6a3d,#4a2bb8); }
+  .dock .np b { display:block; font-size:15px } .dock .np span { color:var(--mute); font-size:13px }
+  .ctl { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .ctl .row { display:flex; gap:22px; align-items:center; color:var(--mute); font-size:18px; }
+  .ctl .play { width:46px; height:46px; border-radius:50%; background:#fff; color:#0a0b12; display:grid; place-items:center; font-size:16px; box-shadow:0 0 0 8px rgba(255,255,255,.08), 0 10px 30px rgba(255,138,91,.5); }
+  .bar { width:100%; max-width:560px; display:flex; align-items:center; gap:10px; font-size:11.5px; color:var(--faint); }
+  .bar div { flex:1; height:4px; border-radius:4px; background:rgba(255,255,255,.14); position:relative; } .bar div::after { content:''; position:absolute; left:0; top:0; bottom:0; width:38%; border-radius:4px; background:linear-gradient(90deg,var(--a),var(--b)); box-shadow:0 0 12px var(--a); }
+  .right { display:flex; justify-content:flex-end; gap:18px; color:var(--mute); }
+  /* now playing */
+  .np-screen .aurora i:nth-child(1){ background:radial-gradient(circle,#f7b733,transparent 66%);} .np-screen .aurora i:nth-child(2){ background:radial-gradient(circle,#fc4a1a,transparent 66%);} .np-screen .aurora i:nth-child(3){ background:radial-gradient(circle,#b0207d,transparent 66%);}
+  .np-body { position:absolute; inset:0; display:grid; grid-template-columns:520px 1fr; gap:70px; padding:70px 90px 130px; }
+  .bigart { width:460px; height:460px; border-radius:44px; background:linear-gradient(135deg,#f7b733,#fc4a1a 55%,#b0207d); box-shadow:0 60px 120px rgba(252,74,26,.45), inset 0 0 0 1px rgba(255,255,255,.2); position:relative; overflow:hidden; }
+  .bigart::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.4),transparent 45%); }
+  .meta { margin-top:34px; } .meta h2 { font-family:'Instrument Serif',serif; font-weight:400; font-size:46px; } .meta p { color:var(--mute); font-size:18px; margin-top:4px; }
+  .lyr { align-self:center; font-size:46px; font-weight:700; line-height:1.18; letter-spacing:-.03em; }
+  .lyr div { opacity:.25; margin:14px 0; transition:.3s; filter:blur(1.5px); } .lyr .on { opacity:1; filter:none; font-size:58px; } .lyr .on span { background:linear-gradient(90deg,#fff 60%,rgba(255,255,255,.35) 60%); -webkit-background-clip:text; color:transparent; }
+  .lyr .n1 { opacity:.5; filter:blur(.5px);}
+  .topbar2 { position:absolute; left:0; right:0; top:0; padding:26px 40px; display:flex; justify-content:space-between; color:var(--mute); font-size:13px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div class="label">Direction A — Aurora · Home</div>
+<div class="screen">
+  <div class="aurora"><i></i><i></i><i></i></div><div class="grain"></div>
+  <div class="rail"><div class="logo"><b></b></div><div class="ni on">⌂</div><div class="ni">⌕</div><div class="ni">▤</div><div class="ni">◉</div><div class="ni">▥</div></div>
+  <div class="main">
+    <div class="top"><div class="search">⌕ &nbsp;What do you want to hear?</div>
+      <div class="chips"><span class="chip on">All</span><span class="chip">Hindi</span><span class="chip">Punjabi</span><span class="chip">Tamil</span><span class="chip">Telugu</span><span class="chip">Bengali</span><span class="chip">English</span></div></div>
+    <div class="scroll">
+      <div class="eyebrow">Monday evening</div>
+      <h1>Good evening, <em>Dhruv</em></h1>
+      <div class="hero">
+        <div class="feature"><div class="stackart"><i></i><i></i><i></i></div><h2>Made for you</h2><p>Arijit Singh, Anuv Jain and a few new faces, picked from what you replay.</p><div class="btns"><span class="btn p">▶ Play mix</span><span class="btn g">⤨ Shuffle</span></div></div>
+        <div class="quick">
+          <div class="q"><div class="art" style="background:linear-gradient(135deg,#6c5bff,#b36bff)"></div><div>Liked songs<small>218 songs</small></div></div>
+          <div class="q"><div class="art" style="background:linear-gradient(135deg,#ff6a88,#ffb86c)"></div><div>Live radio<small>Mirchi, Radio City</small></div></div>
+          <div class="q"><div class="art" style="background:linear-gradient(135deg,#06d6a0,#118ab2)"></div><div>Chill Hindi<small>Smart playlist</small></div></div>
+          <div class="q"><div class="art" style="background:linear-gradient(135deg,#ffd166,#ef476f)"></div><div>Kesariya<small>Arijit Singh</small></div></div>
+          <div class="q"><div class="art" style="background:linear-gradient(135deg,#8338ec,#3a86ff)"></div><div>Punjabi hits<small>Updated today</small></div></div>
+          <div class="q"><div class="art" style="background:linear-gradient(135deg,#f7b733,#fc4a1a)"></div><div>Late night drive<small>Your playlist</small></div></div>
+        </div>
+      </div>
+      <div class="sec"><h3>Trending in India</h3><span class="chip">Show all</span></div>
+      <div class="cards">
+        <div class="card"><div class="cv" style="background:linear-gradient(135deg,#ff9a56,#ff3d68)"></div><b>Kesariya</b><span>Arijit Singh</span></div>
+        <div class="card"><div class="cv" style="background:linear-gradient(135deg,#3a86ff,#8338ec)"></div><b>Tum Hi Ho</b><span>Arijit Singh</span></div>
+        <div class="card"><div class="cv" style="background:linear-gradient(135deg,#06d6a0,#073b4c)"></div><b>Husn</b><span>Anuv Jain</span></div>
+        <div class="card"><div class="cv" style="background:linear-gradient(135deg,#ffd166,#e76f51)"></div><b>Heeriye</b><span>Jasleen Royal</span></div>
+        <div class="card"><div class="cv" style="background:linear-gradient(135deg,#ef476f,#7209b7)"></div><b>Maan Meri Jaan</b><span>King</span></div>
+        <div class="card"><div class="cv" style="background:linear-gradient(135deg,#118ab2,#ffd166)"></div><b>Chaleya</b><span>Anirudh, Arijit</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="dock"><div class="np"><i></i><div><b>Kesariya</b><span>Arijit Singh</span></div></div>
+    <div class="ctl"><div class="row"><span>⤨</span><span>⏮</span><span class="play">▶</span><span>⏭</span><span>⟲</span></div><div class="bar">1:32<div></div>4:28</div></div>
+    <div class="right"><span>♪ Lyrics</span><span>☰</span><span>◐</span><span>🔊</span></div></div>
+</div>
+
+<div class="label">Direction A — Aurora · Now playing with synced lyrics</div>
+<div class="screen np-screen">
+  <div class="aurora"><i></i><i></i><i></i></div><div class="grain"></div>
+  <div class="topbar2"><span>Playing from Trending in India</span><span>Karaoke-style lyrics · word by word</span></div>
+  <div class="np-body">
+    <div><div class="bigart"></div><div class="meta"><h2>Kesariya</h2><p>Arijit Singh · Brahmastra</p></div></div>
+    <div class="lyr"><div>Mujhko itna bata de koi</div><div class="n1">Kaise tujhse dil na lagaye</div><div class="on"><span>Rang jo lagyo, tera</span></div><div class="n1">Ishq mein dooba hun main</div><div>Tu jo mila, mujhe saari duniya</div></div>
+  </div>
+  <div class="dock"><div class="np"><i style="background:linear-gradient(135deg,#f7b733,#b0207d)"></i><div><b>Kesariya</b><span>Arijit Singh</span></div></div>
+    <div class="ctl"><div class="row"><span>⤨</span><span>⏮</span><span class="play">▶</span><span>⏭</span><span>⟲</span></div><div class="bar">1:32<div></div>4:28</div></div>
+    <div class="right"><span>▭ Exit</span><span>☰</span><span>🔊</span></div></div>
+</div>
+</body>
+</html>
