@@ -198,6 +198,23 @@ in `src/shared`.
 Lyra merge: `src/core/lyrics`, `src/shared/{lrc,wordTiming}` and Lyra's player/lyrics components move into Vega.
 Lyra's "now playing" input changes from the Windows media session/Spotify poller to Vega's player store — one adapter.
 
+## 12.1 Web version (decided: same codebase, from now)
+
+The renderer has no Node dependency, so Vega also ships as a static web app (`npm run build:web` -> `dist-web/`),
+hostable on any static host (GitHub Pages once the repo is public). Platform differences sit behind one interface,
+`LibraryBackend` (`src/shared/library.ts`):
+
+| | Desktop | Web |
+|---|---|---|
+| Library metadata | SQLite (`node:sqlite`, FTS5) in main | IndexedDB, in-memory index for search |
+| Folder access | native dialog + fs scan | File System Access API (Chromium); handle kept in IndexedDB, re-grant after restart |
+| Audio URL | `vega-media://file/<id>` (Range-capable protocol) | `blob:` URL of the picked file |
+| App state (likes, playlists, history) | SQLite `kv` | IndexedDB `kv` |
+| Online providers (M3) | via main-process proxy (no CORS limits) | direct from browser; only CORS-friendly sources (Audius, Jamendo, Internet Archive) |
+
+Consequence: web users with no local files get the online sources; yt-dlp/Piped-style providers are desktop-only.
+Firefox/Safari lack directory access, so Sources shows a notice and only online sources work there.
+
 ## 13. Repo layout
 
 ```
@@ -214,8 +231,8 @@ docs/          design, ADRs, provider notes
 
 | Phase | Deliverable | Done when |
 |---|---|---|
-| **M1** | Electron+React shell, design system, Home/Search/Library/Playlists/Stats views, player bar + queue, playback engine, **mock provider**, persisted JSON/localStorage repo, play-event log & stats | `npm run dev` opens app; search fake catalog, play (synth audio), queue, build playlists, stats update |
-| M2 | SQLite, local-folder scanner + tags, real files playing | Point at music folder; library persists |
+| **M1 (done)** | Electron+React shell, design system, Home/Search/Library/Playlists/Stats views, player bar + queue, playback engine, **mock provider**, persisted JSON/localStorage repo, play-event log & stats | `npm run dev` opens app; search fake catalog, play (synth audio), queue, build playlists, stats update |
+| **M2 (done)** | SQLite (desktop) / IndexedDB (web), incremental folder scanner + tags + cover art, local provider, `vega-media://` protocol, web build | Point at music folder; library persists and plays on both platforms |
 | M3 | Audius + Jamendo + Archive providers, proxy/cache, fallback chain | Search returns online results; plays with no key |
 | M4 | MusicBrainz/Last.fm/Cover Art enrichment, recs v1, smart playlists | Daily Mix & Discover from real history |
 | M5 | Lyra integration: synced lyrics, karaoke, fullscreen UI | Lyrics follow Vega playback |

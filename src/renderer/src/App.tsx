@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useCatalog } from './store/catalog'
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
 import { Sidebar } from './components/Sidebar'
@@ -8,11 +9,16 @@ import { Home } from './views/Home'
 import { Library } from './views/Library'
 import { PlaylistView } from './views/PlaylistView'
 import { Search } from './views/Search'
+import { Sources } from './views/Sources'
 import { Stats } from './views/Stats'
 
 export function App() {
   const view = useUi((s) => s.view)
   const queueOpen = useUi((s) => s.queueOpen)
+
+  useEffect(() => {
+    void useCatalog.getState().refresh()
+  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -36,6 +42,7 @@ export function App() {
         {view.name === 'search' && <Search />}
         {view.name === 'library' && <Library />}
         {view.name === 'stats' && <Stats />}
+        {view.name === 'sources' && <Sources />}
         {view.name === 'playlist' && <PlaylistView id={view.id} />}
       </main>
       {queueOpen && <QueuePanel />}

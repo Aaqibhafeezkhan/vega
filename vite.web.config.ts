@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 
 // Renderer-only dev server (no Electron): `npm run dev:web`. Handy for UI work and browser testing.
 export default defineConfig({
+  base: './',
   root: resolve(__dirname, 'src/renderer'),
   resolve: {
     alias: {
@@ -13,5 +14,6 @@ export default defineConfig({
     }
   },
   plugins: [react()],
+  build: { outDir: resolve(__dirname, 'dist-web'), emptyOutDir: true },
   server: { port: 5174, strictPort: true }
 })

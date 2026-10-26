@@ -3,7 +3,8 @@ import { buildProfile, recommend } from '@shared/recs'
 import type { Shelf as ShelfData } from '@shared/provider'
 import { refKey, type Track } from '@shared/types'
 import { Shelf } from '@/components/Shelf'
-import { catalog, sources } from '@/lib/sources'
+import { sources } from '@/lib/sources'
+import { useCatalog } from '@/store/catalog'
 import { useLibrary } from '@/store/library'
 
 function greeting(): string {
@@ -14,6 +15,7 @@ function greeting(): string {
 export function Home() {
   const events = useLibrary((s) => s.events)
   const seed = useLibrary((s) => s.seedDemoHistory)
+  const catalog = useCatalog((s) => s.tracks)
   const [shelves, setShelves] = useState<ShelfData[]>([])
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function Home() {
       mix: recommend(catalog, profile, { limit: 12 }),
       discover: recommend(catalog, profile, { limit: 12, maxFamiliarity: 0.3, exclude: seen })
     }
-  }, [events])
+  }, [events, catalog])
 
   return (
     <div className="view">

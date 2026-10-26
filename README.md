@@ -6,9 +6,9 @@ and synced lyrics get merged in later. Vega is the brightest star in the constel
 
 Stack: Electron + React + TypeScript + Zustand (same as Lyra).
 
-## Status: milestone 1 (UI + engine on a demo catalog)
+## Status: milestone 2 (local library on desktop and web)
 
-Runs against a built-in **demo provider** (fictional catalog, synthesized audio). Real sources plug in behind the
+Add a music folder under **Sources**: it is scanned (tags, duration, cover art) into SQLite on desktop or IndexedDB in the browser, searchable instantly, and played from disk. A built-in **demo provider** (fictional catalog) stays available. Online sources plug in behind the
 `SourceProvider` interface later: local files, Audius, Jamendo, Internet Archive, yt-dlp. See
 [docs/design.md](docs/design.md) for architecture, provider research and roadmap.
 
@@ -20,7 +20,8 @@ insights (top artists/genres/tracks, clock, streak), recommendations (Made for y
 ```bash
 npm install
 npm run dev        # Electron app
-npm run dev:web    # renderer only, in a browser at http://localhost:5174
+npm run dev:web    # web version, in a browser at http://localhost:5174 (Chrome/Edge for local folders)
+npm run build:web  # static site in dist-web/
 npm test
 npm run typecheck
 ```
@@ -32,10 +33,11 @@ Shortcuts: Space play/pause, Ctrl+Left/Right previous/next.
 ## Layout
 
 ```
-src/shared/      Track/Provider contracts, SourceRegistry (fan-out, dedupe, circuit breaker), recs, stats
-src/providers/   mock (M1); local/audius/... later
+src/shared/      Track/Provider/Library contracts, SourceRegistry (fan-out, dedupe, circuit breaker), recs, stats
+src/providers/   mock, local; audius/... later
 src/renderer/    React UI, stores, audio engine (store/player.ts)
-src/main, src/preload   Electron shell
+src/main/        Electron shell: SQLite (db.ts), folder scanner, vega-media:// protocol, IPC
+src/preload/     contextBridge API
 ```
 
 ## License

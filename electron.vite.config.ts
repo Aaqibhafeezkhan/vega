@@ -8,7 +8,8 @@ const providers = resolve(__dirname, 'src/providers')
 export default defineConfig({
   main: {
     resolve: { alias: { '@shared': shared, '@providers': providers } },
-    build: { externalizeDeps: true }
+    // music-metadata is ESM-only: bundle it instead of require()-ing it at runtime
+    build: { externalizeDeps: { exclude: ['music-metadata'] } }
   },
   preload: {
     resolve: { alias: { '@shared': shared, '@providers': providers } },

@@ -1,5 +1,11 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
+import { initLibrary, registerMediaScheme } from './library'
+
+registerMediaScheme()
+
+// Lets dev/test runs use an isolated profile: VEGA_USERDATA=<dir> npm run dev
+if (process.env['VEGA_USERDATA']) app.setPath('userData', process.env['VEGA_USERDATA'])
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -29,6 +35,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  initLibrary()
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

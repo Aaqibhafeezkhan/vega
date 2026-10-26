@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { refKey, type PlayEvent, type Playlist, type Track } from '@shared/types'
-import { catalog } from '@/lib/sources'
+import { useCatalog } from './catalog'
 import { load, save } from '@/lib/persist'
 
 const MAX_EVENTS = 5000
@@ -97,6 +97,8 @@ export const useLibrary = create<LibraryState>((set, get) => ({
 
   /** Generate ~3 weeks of plausible taste-biased listening so stats and recs can be explored. */
   seedDemoHistory: () => {
+    const catalog = useCatalog.getState().tracks
+    if (!catalog.length) return
     const favs = new Set(['Nova Lumen', 'Selene & The Tides', 'Mika Ono'])
     const pool = catalog.flatMap((t) => (favs.has(t.artists[0] ?? '') ? [t, t, t] : [t]))
     const now = Date.now()

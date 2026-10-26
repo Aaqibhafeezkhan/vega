@@ -7,7 +7,8 @@ const NAV: { view: View; label: string; icon: string }[] = [
   { view: { name: 'home' }, label: 'Home', icon: 'home' },
   { view: { name: 'search' }, label: 'Search', icon: 'search' },
   { view: { name: 'library' }, label: 'Library', icon: 'library' },
-  { view: { name: 'stats' }, label: 'Insights', icon: 'stats' }
+  { view: { name: 'stats' }, label: 'Insights', icon: 'stats' },
+  { view: { name: 'sources' }, label: 'Sources', icon: 'folder' }
 ]
 
 export function Sidebar() {
