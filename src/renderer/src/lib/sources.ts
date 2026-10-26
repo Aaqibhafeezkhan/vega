@@ -5,6 +5,8 @@ import { createAudiusProvider } from '@providers/audius'
 import { createJamendoProvider } from '@providers/jamendo'
 import { createArchiveProvider } from '@providers/archive'
 import { createRadioProvider } from '@providers/radio'
+import { createPipedProvider } from '@providers/piped'
+import { createYtDlpProvider } from '@providers/ytdlp'
 import { backend } from './backend'
 
 /**
@@ -29,7 +31,12 @@ export function setDemoEnabled(on: boolean): void {
 }
 
 /** Registers/unregisters online providers to match settings. Jamendo only exists once the user supplies a client id. */
-export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; radio: boolean; jamendoClientId: string }): void {
+export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; radio: boolean; ytdlp: boolean; piped: boolean; pipedInstances: string; jamendoClientId: string }): void {
+  // YouTube-derived sources are opt-in and desktop only
+  if (cfg.ytdlp && window.vega) sources.register(createYtDlpProvider(window.vega.ytdlp), 80)
+  else sources.unregister('ytdlp')
+  if (cfg.piped && window.vega) sources.register(createPipedProvider({ instances: cfg.pipedInstances.split(/[\s,]+/).filter(Boolean) }), 85)
+  else sources.unregister('piped')
   if (cfg.radio) sources.register(radio, 70)
   else sources.unregister('radio')
   if (cfg.archive) sources.register(createArchiveProvider(), 55)

@@ -8,7 +8,7 @@ import { useLibrary } from '@/store/library'
 import { useMeta } from '@/store/meta'
 import { useUi } from '@/store/ui'
 
-const SOURCE_NAMES: Record<string, string> = { local: 'My music', audius: 'Audius', jamendo: 'Jamendo', archive: 'Internet Archive', mock: 'Demo' }
+const SOURCE_NAMES: Record<string, string> = { local: 'My music', audius: 'Audius', jamendo: 'Jamendo', archive: 'Internet Archive', mock: 'Demo', ytdlp: 'YouTube (yt-dlp)', piped: 'YouTube (Piped)' }
 
 export function Search() {
   const query = useUi((s) => s.query)

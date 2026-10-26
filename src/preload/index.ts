@@ -25,6 +25,12 @@ const api: VegaDesktopApi = {
     clear: () => invoke(CH.cacheClear),
     setMaxMb: (mb) => invoke(CH.cacheSetMax, mb)
   },
+  ytdlp: {
+    status: () => invoke(CH.ytStatus),
+    install: () => invoke(CH.ytInstall),
+    search: (q, limit) => invoke(CH.ytSearch, q, limit),
+    resolve: (id) => invoke(CH.ytResolve, id)
+  },
   kv: {
     getAll: () => invoke(CH.kvGetAll),
     set: (key, value) => invoke(CH.kvSet, key, value)

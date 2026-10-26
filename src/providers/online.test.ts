@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createAudiusProvider } from './audius'
 import { createJamendoProvider } from './jamendo'
 import { createArchiveProvider } from './archive'
+import { createPipedProvider } from './piped'
 import { createMusicBrainz } from './metadata/musicbrainz'
 import { createLastFm } from './metadata/lastfm'
 
@@ -157,5 +158,33 @@ describe('metadata providers', () => {
     expect(await lf.similarArtists('M83')).toEqual(['Daft Punk', 'Justice'])
     expect(await lf.similarTracks('M83', 'Midnight City')).toEqual([{ artist: 'Band', title: 'Song' }])
     expect(await lf.validate()).toBe(false)
+  })
+})
+
+describe('piped provider', () => {
+  const search = { items: [{ url: '/watch?v=dQw4w9WgXcQ', title: 'Song', uploaderName: 'Artist - Topic', duration: 200, thumbnail: 'https://t/x.jpg' }, { url: '/channel/x', title: 'chan' }, { url: '/watch?v=short', title: 'bad', duration: 10 }] }
+  const streams = { audioStreams: [{ url: 'https://s/webm', mimeType: 'audio/webm', bitrate: 160000 }, { url: 'https://s/m4a-low', mimeType: 'audio/mp4', bitrate: 48000 }, { url: 'https://s/m4a-hi', mimeType: 'audio/mp4', bitrate: 128000 }, { url: 'https://s/video', mimeType: 'video/mp4', videoOnly: true, bitrate: 999999 }] }
+
+  it('maps search results and rejects malformed entries', async () => {
+    const f = vi.fn(async () => json(search))
+    const p = createPipedProvider({ instances: ['https://a.example'], fetchImpl: f as unknown as typeof fetch })
+    const { tracks } = await p.search('x', { kind: 'track', limit: 10 })
+    expect(tracks).toHaveLength(1)
+    expect(tracks[0]).toMatchObject({ ref: { source: 'piped', id: 'dQw4w9WgXcQ' }, artists: ['Artist'], durationMs: 200_000 })
+  })
+
+  it('prefers the best m4a audio stream', async () => {
+    const p = createPipedProvider({ instances: ['https://a.example'], fetchImpl: (async () => json(streams)) as unknown as typeof fetch })
+    expect(await p.resolve('dQw4w9WgXcQ')).toMatchObject({ url: 'https://s/m4a-hi' })
+    await expect(p.resolve('x; rm')).rejects.toThrow('bad video id')
+  })
+
+  it('falls through dead instances and remembers the good one', async () => {
+    const f = vi.fn(async (u: unknown) => (String(u).startsWith('https://dead') ? json({}, 502) : json(search)))
+    const p = createPipedProvider({ instances: ['https://dead.example', 'https://live.example'], fetchImpl: f as unknown as typeof fetch })
+    await p.search('x', { kind: 'track', limit: 5 })
+    await p.search('y', { kind: 'track', limit: 5 })
+    const hosts = f.mock.calls.map((c) => new URL(String((c as unknown[])[0])).host)
+    expect(hosts).toEqual(['dead.example', 'live.example', 'live.example'])
   })
 })

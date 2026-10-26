@@ -5,6 +5,7 @@ import { APP_SCHEME, CH, EV, MEDIA_SCHEME } from '@shared/ipc'
 import type { ScanProgress } from '@shared/library'
 import { LibraryDb, rowToTrack } from './db'
 import { scanFolder } from './scanner'
+import { YtDlp } from './ytdlp'
 import { DEFAULT_MAX_MB, StreamCache, decodeStreamUrl, isAllowedStreamUrl } from './streamCache'
 
 let db: LibraryDb
@@ -104,6 +105,18 @@ export function initLibrary(): void {
     const r = db.getTrack(String(id))
     return r ? rowToTrack(r) : null
   })
+  const ytdlp = new YtDlp(join(data, 'bin'))
+  ipcMain.handle(CH.ytStatus, () => ytdlp.status())
+  ipcMain.handle(CH.ytInstall, async () => {
+    try {
+      await ytdlp.install((u) => net.fetch(u))
+      return { ok: true }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) }
+    }
+  })
+  ipcMain.handle(CH.ytSearch, (_e, q: string, limit: number) => ytdlp.search(String(q), Number(limit) || 10))
+  ipcMain.handle(CH.ytResolve, (_e, id: string) => ytdlp.streamUrl(String(id)))
   ipcMain.handle(CH.cacheStats, () => cache.stats())
   ipcMain.handle(CH.cacheClear, () => cache.clear())
   ipcMain.handle(CH.cacheSetMax, (_e, mb: number) => {

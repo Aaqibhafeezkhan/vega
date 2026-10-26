@@ -8,7 +8,7 @@ import { useUi } from '@/store/ui'
 import { Cover } from './Cover'
 import { Icon } from './Icon'
 
-const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive', radio: 'Radio', local: 'Local' }
+const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive', radio: 'Radio', local: 'Local', ytdlp: 'YouTube', piped: 'YouTube' }
 
 interface Props {
   track: Track

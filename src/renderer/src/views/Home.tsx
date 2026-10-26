@@ -42,7 +42,7 @@ export function Home() {
   const playlists = useLibrary((s) => s.playlists)
   const seed = useLibrary((s) => s.seedDemoHistory)
   const catalog = useCatalog((s) => s.tracks)
-  const online = useOnline((s) => `${s.audius}|${s.archive}|${s.radio}|${s.jamendoClientId}`)
+  const online = useOnline((s) => `${s.audius}|${s.archive}|${s.radio}|${s.ytdlp}|${s.piped}|${s.jamendoClientId}`)
   const demo = useCatalog((s) => s.demo)
   const artistGenres = useMeta((s) => s.artistGenres)
   const genresFor = useMeta((s) => s.genresFor)

@@ -14,7 +14,11 @@ export const CH = {
   kvSet: 'kv:set',
   cacheStats: 'cache:stats',
   cacheClear: 'cache:clear',
-  cacheSetMax: 'cache:setMax'
+  cacheSetMax: 'cache:setMax',
+  ytStatus: 'ytdlp:status',
+  ytInstall: 'ytdlp:install',
+  ytSearch: 'ytdlp:search',
+  ytResolve: 'ytdlp:resolve'
 } as const
 
 export const EV = {
@@ -37,6 +41,12 @@ export interface VegaDesktopApi {
     stats(): Promise<{ bytes: number; files: number; maxBytes: number }>
     clear(): Promise<void>
     setMaxMb(mb: number): Promise<number>
+  }
+  ytdlp: {
+    status(): Promise<{ installed: boolean; version?: string }>
+    install(): Promise<{ ok: boolean; error?: string }>
+    search(q: string, limit: number): Promise<{ id: string; title: string; channel: string; durationSec: number }[]>
+    resolve(id: string): Promise<string>
   }
   kv: {
     getAll(): Promise<Record<string, string>>
