@@ -76,8 +76,7 @@ describe('YtDlp', () => {
     const calls: string[][] = []
     const run: Runner = async (_b, args) => {
       calls.push(args)
-      return { stdout: 'https://rr1.googlevideo.com/video
-', stderr: '', code: 0 }
+      return { stdout: 'https://rr1.googlevideo.com/video\n', stderr: '', code: 0 }
     }
     const y = new YtDlp(dir, 'linux', run)
     expect(await y.videoUrl('dQw4w9WgXcQ', 720)).toBe('https://rr1.googlevideo.com/video')
