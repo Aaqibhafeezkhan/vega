@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { UpdateState } from '@shared/ipc'
 import { Icon } from '@/components/Icon'
 import { load, save } from '@/lib/persist'
+import { detectPlatform, fetchDownloads, type Downloads } from '@/lib/downloads'
 import { clearOffline, offlineStats } from '@/lib/offline'
 import { pingsEnabled, setPingsEnabled } from '@/lib/trending'
 import { useAuth } from '@/store/auth'
@@ -66,6 +67,43 @@ function PrivacyPanel() {
   )
 }
 
+function GetAppPanel() {
+  const platform = detectPlatform()
+  const [d, setD] = useState<Downloads | null>(null)
+  useEffect(() => {
+    void fetchDownloads().then(setD)
+  }, [])
+  const link = (href: string | null, label: string, primary: boolean) =>
+    href ? (
+      <a className={primary ? 'pill big' : 'pill ghost'} href={href}>
+        <Icon name="download" size={16} /> {label}
+      </a>
+    ) : null
+  const win = link(d?.windows ?? null, 'Download for Windows', platform !== 'android')
+  const and = link(d?.android ?? null, 'Download for Android', platform === 'android')
+  // the visitor's own platform first
+  const order = platform === 'android' ? [and] : [win, and]
+  const missing = d && !(platform === 'android' ? d.android : d.windows)
+  return (
+    <div className="panel">
+      <h3>Get the app{d?.version ? ` · v${d.version}` : ''}</h3>
+      <p className="muted">
+        {platform === 'android'
+          ? 'The Android app keeps playing with the screen off and shows lock-screen controls.'
+          : 'The desktop app adds offline playback, your own music folders, the equalizer and music-video backgrounds.'}
+      </p>
+      <div className="actions">
+        {order}
+        {d && (missing || (!win && !and)) && (
+          <a className="pill ghost" href={d?.page ?? 'https://github.com/DhruvHarani1/vega/releases/latest'} target="_blank" rel="noreferrer">
+            {missing ? `${platform === 'android' ? 'Android' : 'Windows'} build not published yet: see all releases` : 'All releases'}
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function UpdatesPanel() {
   const api = window.vega
   const [info, setInfo] = useState<{ version: string; packaged: boolean } | null>(null)
@@ -81,15 +119,13 @@ function UpdatesPanel() {
 
   if (!api) {
     return (
-      <div className="panel">
-        <h3>Updates</h3>
-        <p className="muted">You are using the web version, which is always the latest. Install the desktop app for offline playback, your own music folders and the equalizer.</p>
-        <div className="actions">
-          <a className="pill ghost" href="https://github.com/DhruvHarani1/vega/releases/latest" target="_blank" rel="noreferrer">
-            Get the desktop app
-          </a>
+      <>
+        <div className="panel">
+          <h3>Updates</h3>
+          <p className="muted">You are using the web version, which is always the latest.</p>
         </div>
-      </div>
+        {!(window as unknown as { __vegaAndroid?: unknown }).__vegaAndroid && <GetAppPanel />}
+      </>
     )
   }
 
