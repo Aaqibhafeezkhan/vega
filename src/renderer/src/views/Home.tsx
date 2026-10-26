@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buildCoListening, buildProfile, coListeningScores, recommend } from '@shared/recs'
 import type { Shelf as ShelfData } from '@shared/provider'
-import { refKey, type Track } from '@shared/types'
+import { refKey } from '@shared/types'
 import { Cover } from '@/components/Cover'
 import { Icon } from '@/components/Icon'
 import { Shelf } from '@/components/Shelf'
@@ -10,6 +10,7 @@ import { sources } from '@/lib/sources'
 import { useCatalog } from '@/store/catalog'
 import { useLibrary } from '@/store/library'
 import { useMeta } from '@/store/meta'
+import { useLang } from '@/store/lang'
 import { useOnline } from '@/store/online'
 import { usePlayer } from '@/store/player'
 import { useUi } from '@/store/ui'
@@ -17,23 +18,6 @@ import { useUi } from '@/store/ui'
 function greeting(): string {
   const h = new Date().getHours()
   return h < 5 ? 'Still up?' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
-}
-
-function QuickTile({ title, sub, tracks, icon }: { title: string; sub: string; tracks: Track[]; icon?: string }) {
-  const playTracks = usePlayer((s) => s.playTracks)
-  const first = tracks[0]
-  return (
-    <button className="quick" onClick={() => tracks.length && playTracks(tracks)} disabled={!tracks.length}>
-      <span className="quick-art">{icon ? <Icon name={icon} size={22} /> : first && <Cover track={first} size={64} radius={0} />}</span>
-      <span className="quick-text">
-        <span className="row-title">{title}</span>
-        <span className="row-sub">{sub}</span>
-      </span>
-      <span className="quick-play">
-        <Icon name="play" size={18} />
-      </span>
-    </button>
-  )
 }
 
 export function Home() {
@@ -50,6 +34,7 @@ export function Home() {
   const lastfm = useMeta((s) => s.lastfmKey)
   const playTracks = usePlayer((s) => s.playTracks)
   const go = useUi((s) => s.go)
+  const lang = useLang((s) => s.lang)
   const [shelves, setShelves] = useState<ShelfData[] | null>(null)
   const [similar, setSimilar] = useState<{ seed: string; artists: Set<string> } | null>(null)
 
@@ -60,7 +45,7 @@ export function Home() {
     return () => {
       live = false
     }
-  }, [online, demo])
+  }, [online, demo, lang])
 
   const recent = useMemo(() => recentTracks(events, 10), [events])
 
@@ -95,7 +80,7 @@ export function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, recent, catalog, liked, artistGenres, genresFor, similar])
 
-  const heroCovers = mix.slice(0, 3)
+  const chart = useMemo(() => shelves?.[0]?.tracks.slice(0, 10) ?? [], [shelves])
   const minutes = Math.round(events.reduce((n, e) => n + e.listenedMs, 0) / 60_000)
 
   return (
@@ -103,7 +88,9 @@ export function Home() {
       <header className="home-head">
         <div>
           <p className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-          <h1 className="display">{greeting()}</h1>
+          <h1 className="display">
+            {greeting()}, <em>listener</em>
+          </h1>
         </div>
         {events.length > 0 && (
           <div className="home-stats">
@@ -129,52 +116,71 @@ export function Home() {
         </div>
       )}
 
-      <div className="quick-grid">
-        <QuickTile title="Liked songs" sub={`${liked.length} songs`} tracks={liked} icon="heart-fill" />
-        {playlists.slice(0, 3).map((p) => (
-          <QuickTile key={p.id} title={p.name} sub={`${p.tracks.length} songs`} tracks={p.tracks} />
-        ))}
-        {recent.slice(0, 4 - Math.min(3, playlists.length)).map((t) => (
-          <QuickTile key={refKey(t.ref)} title={t.title} sub={t.artists.join(', ')} tracks={[t]} />
-        ))}
-        <button className="quick quick-radio" onClick={() => go({ name: 'radio' })}>
-          <span className="quick-art">
-            <Icon name="radio" size={22} />
-          </span>
-          <span className="quick-text">
-            <span className="row-title">Live radio</span>
-            <span className="row-sub">Stations from around the world</span>
-          </span>
+      <div className="bento">
+        <section className="tile mix">
+          <span className="eyebrow" style={{ color: 'rgba(18,4,10,.7)' }}>Daily mix</span>
+          <div>Made for you.</div>
+          <div className="mix-row">
+            <button className="mix-go" onClick={() => mix.length && playTracks(mix)} aria-label="Play mix">
+              <Icon name="play" size={26} />
+            </button>
+            <span className="mix-tag">{mix.length} songs</span>
+            <p>{events.length ? 'Built from what you play, skip and listen to together.' : 'Starts generic and gets sharper with every song you play.'}</p>
+          </div>
+          <div className="vinyl" aria-hidden />
+        </section>
+        <button className="tile t-violet" onClick={() => liked.length && playTracks(liked)}>
+          <span className="tile-go"><Icon name="play" size={16} /></span>
+          Liked songs
+          <small>{liked.length} songs</small>
+        </button>
+        <button className="tile t-sun" onClick={() => go({ name: 'radio' })}>
+          <span className="tile-go"><Icon name="play" size={16} /></span>
+          Live radio
+          <small>Around the world</small>
+        </button>
+        <button className="tile t-teal" onClick={() => discover.length && playTracks(discover)}>
+          <span className="tile-go"><Icon name="play" size={16} /></span>
+          Discover
+          <small>New to you</small>
+        </button>
+        <button className="tile t-dark" onClick={() => go({ name: 'library' })}>
+          <span className="tile-go"><Icon name="play" size={16} /></span>
+          Your library
+          <small>{playlists.length} playlists</small>
+        </button>
+        <button className="tile t-rose" onClick={() => go({ name: 'stats' })}>
+          <span className="tile-go"><Icon name="play" size={16} /></span>
+          Insights
+          <small>{minutes} min listened</small>
+        </button>
+        <button className="tile t-paper" onClick={() => go({ name: 'sources' })}>
+          <span className="tile-go"><Icon name="play" size={16} /></span>
+          Sources
+          <small>Where music comes from</small>
         </button>
       </div>
 
-      {mix.length > 0 && (
-        <section className="hero-card">
-          <div className="hero-copy">
-            <p className="eyebrow">Daily mix</p>
-            <h2 className="title-1">Made for you</h2>
-            <p className="muted">{events.length ? 'Built from what you play, skip and listen to together.' : 'Starts generic and gets sharper with every song you play.'}</p>
-            <div className="hero-actions">
-              <button className="pill big" onClick={() => playTracks(mix)}>
-                <Icon name="play" size={16} /> Play mix
-              </button>
-              <button
-                className="pill ghost"
-                onClick={() => {
-                  const s = usePlayer.getState()
-                  if (!s.shuffle) s.toggleShuffle()
-                  playTracks(mix)
-                }}
-              >
-                <Icon name="shuffle" size={16} /> Shuffle
-              </button>
-            </div>
+      {chart.length > 0 && (
+        <section className="shelf">
+          <div className="shelf-head">
+            <h2 className="title-2">
+              Top 10 in <em>{lang}</em>
+            </h2>
+            <button className="chip" onClick={() => playTracks(chart)}>
+              <Icon name="play" size={12} /> Play all
+            </button>
           </div>
-          <div className="hero-stack" aria-hidden>
-            {heroCovers.map((t, i) => (
-              <div key={refKey(t.ref)} className={`hero-cover c${i}`}>
-                <Cover track={t} fill radius={20} />
-              </div>
+          <div className="charts">
+            {chart.map((t, i) => (
+              <button key={refKey(t.ref)} className="rank" onClick={() => playTracks(chart, i)}>
+                <span className={`n${i === 0 ? ' t1' : ''}`}>{i + 1}</span>
+                <Cover track={t} size={50} radius={12} />
+                <span className="rank-text" style={{ minWidth: 0 }}>
+                  <span className="row-title" style={{ display: 'block' }}>{t.title}</span>
+                  <span className="row-sub">{t.artists.join(', ')}</span>
+                </span>
+              </button>
             ))}
           </div>
         </section>
@@ -197,7 +203,7 @@ export function Home() {
           </div>
         </div>
       )}
-      {shelves?.map((s) => (
+      {shelves?.slice(1).map((s) => (
         <Shelf key={s.id} title={s.title} tracks={s.tracks} live={s.id.startsWith('radio')} />
       ))}
     </div>

@@ -87,7 +87,14 @@ export function App() {
 
   return (
     <div className={`app${panel ? ' with-drawer' : ''}${panel === 'lyrics' ? ' wide-drawer' : ''}`}>
-      <div className="ambient" aria-hidden />
+      <div className="ambient" aria-hidden>
+        <div className="aurora">
+          <i />
+          <i />
+          <i />
+        </div>
+        <div className="grain" />
+      </div>
       <Sidebar />
       <section className="stage">
         <TopBar />

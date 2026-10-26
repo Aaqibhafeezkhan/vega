@@ -184,7 +184,7 @@ describe('ytm provider', () => {
     let n = 0
     const api = { ytm: { search: vi.fn(async () => { if (n++ === 1) throw new Error('x'); return [song] }) }, ytdlp: {} }
     const shelves = await createYtmProvider(api as never).browse!()
-    expect(shelves.length).toBe(6)
-    expect(shelves[0]!.title).toBe('Trending Hindi')
+    expect(shelves.length).toBe(4)
+    expect(shelves[0]!.title).toBe('Top Hindi songs')
   })
 })

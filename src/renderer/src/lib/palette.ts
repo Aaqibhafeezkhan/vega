@@ -1,6 +1,8 @@
 import { hash } from './format'
 
 export interface Palette {
+  /** Saturated mid-tone colours for the aurora background and gradient accents. */
+  aur: [string, string, string]
   /** Readable, fairly light tint for small accents (focus ring, dots). */
   accent: string
   /** Deep, saturated-but-dark colours for backgrounds. */
@@ -8,14 +10,15 @@ export interface Palette {
   tint2: string
 }
 
-export const NEUTRAL_PALETTE: Palette = { accent: '#9aa8ff', tint1: '#1b1d3a', tint2: '#0e1020' }
+export const NEUTRAL_PALETTE: Palette = { accent: '#ff7a1a', tint1: '#3a1a0a', tint2: '#1a1040', aur: ['#ff6a1a', '#7c5cff', '#ff3d7f'] }
 
 /** Deterministic palette for artwork-less tracks; matches the generated cover's hue. */
 export function paletteFromKey(key: string): Palette {
   const h = hash(key)
   const a = h % 360
   const b = (a + 40 + ((h >> 8) % 80)) % 360
-  return { accent: hsl(a, 0.7, 0.72), tint1: hsl(a, 0.5, 0.22), tint2: hsl(b, 0.45, 0.14) }
+  const c = (b + 60) % 360
+  return { accent: hsl(a, 0.85, 0.62), tint1: hsl(a, 0.5, 0.22), tint2: hsl(b, 0.45, 0.14), aur: [hsl(a, 0.85, 0.55), hsl(b, 0.8, 0.5), hsl(c, 0.85, 0.55)] }
 }
 
 function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
@@ -84,9 +87,10 @@ export async function extractPalette(src: string, fallback: Palette = NEUTRAL_PA
   const c = avg(second)
 
   const pal: Palette = {
-    accent: hsl(a.h, Math.min(0.75, Math.max(0.35, a.s)), 0.72),
+    accent: hsl(a.h, Math.min(0.9, Math.max(0.55, a.s)), 0.62),
     tint1: hsl(a.h, Math.min(0.55, Math.max(0.2, a.s * 0.8)), 0.2),
-    tint2: hsl(c.h, Math.min(0.5, Math.max(0.18, c.s * 0.75)), 0.14)
+    tint2: hsl(c.h, Math.min(0.5, Math.max(0.18, c.s * 0.75)), 0.14),
+    aur: [hsl(a.h, Math.min(0.95, Math.max(0.6, a.s)), 0.55), hsl(c.h, Math.min(0.9, Math.max(0.55, c.s)), 0.5), hsl((a.h + c.h) / 2 + 40, 0.8, 0.55)]
   }
   if (cache.size > 40) cache.delete(cache.keys().next().value as string)
   cache.set(src, pal)

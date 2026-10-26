@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { useAuth } from '@/store/auth'
+import { useLang, YTM_LANGUAGES } from '@/store/lang'
 import { useUi } from '@/store/ui'
 import { Icon } from './Icon'
 
 export function TopBar() {
   const { back, forward, cursor, history, go, query, setQuery, view, setCommandOpen } = useUi()
   const auth = useAuth()
+  const { lang, setLang } = useLang()
   const input = useRef<HTMLInputElement>(null)
 
   // "/" focuses search from anywhere (Ctrl/Cmd+K opens the command palette instead)
@@ -53,6 +55,14 @@ export function TopBar() {
           <kbd>/</kbd>
         )}
       </label>
+
+      <div className="langs" role="tablist" aria-label="Music language">
+        {YTM_LANGUAGES.map((l) => (
+          <button key={l} role="tab" aria-selected={lang === l} className={`chip${lang === l ? ' on' : ''}`} onClick={() => setLang(l)}>
+            {l}
+          </button>
+        ))}
+      </div>
 
       <div className="topbar-end">
         <button className="chip cmd-chip" onClick={() => setCommandOpen(true)} title="Command palette (Ctrl+K)">

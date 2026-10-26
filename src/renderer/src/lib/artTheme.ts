@@ -10,11 +10,15 @@ export function useArtTheme(): void {
 
   useEffect(() => {
     let live = true
-    const apply = (p: { accent: string; tint1: string; tint2: string }): void => {
+    const apply = (p: { accent: string; tint1: string; tint2: string; aur: [string, string, string] }): void => {
       const r = document.documentElement.style
       r.setProperty('--accent', p.accent)
       r.setProperty('--tint1', p.tint1)
       r.setProperty('--tint2', p.tint2)
+      r.setProperty('--aur1', p.aur[0])
+      r.setProperty('--aur2', p.aur[1])
+      r.setProperty('--aur3', p.aur[2])
+      r.setProperty('--accent2', p.aur[2])
     }
     if (!track) {
       apply(NEUTRAL_PALETTE)

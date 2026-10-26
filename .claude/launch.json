@@ -1,0 +1,1 @@
+{ "version": "0.0.1", "configurations": [ { "name": "vega-web", "runtimeExecutable": "npx", "runtimeArgs": ["vite", "-c", "vite.web.config.ts", "--port", "5199"], "port": 5199 } ] }

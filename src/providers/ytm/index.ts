@@ -17,16 +17,25 @@ interface Song {
   thumbnail?: string
 }
 
-/** Home shelves: (title, search). India-first, with a global one. Run in parallel and cached by the main process. */
-export const YTM_SHELVES: { id: string; title: string; query: string }[] = [
-  { id: 'ytm-hindi', title: 'Trending Hindi', query: 'trending hindi songs' },
-  { id: 'ytm-bolly', title: 'Bollywood romance', query: 'bollywood romantic songs' },
-  { id: 'ytm-punjabi', title: 'Punjabi hits', query: 'latest punjabi songs' },
-  { id: 'ytm-tamil', title: 'Tamil hits', query: 'latest tamil songs' },
-  { id: 'ytm-telugu', title: 'Telugu hits', query: 'latest telugu songs' },
-  { id: 'ytm-lofi', title: 'Hindi lo-fi chill', query: 'hindi lofi songs' },
-  { id: 'ytm-global', title: 'Global top hits', query: 'top global hits' }
-]
+export const YTM_LANGUAGES = ['Hindi', 'Punjabi', 'Tamil', 'Telugu', 'English', 'Bengali', 'Marathi'] as const
+export type YtmLanguage = (typeof YTM_LANGUAGES)[number]
+
+let language: YtmLanguage = 'Hindi'
+export function setYtmLanguage(l: YtmLanguage): void {
+  language = l
+}
+
+/** Home shelves for the chosen language (India-first), plus a global one. Run in parallel and cached by the main process. */
+export function ytmShelves(lang: YtmLanguage): { id: string; title: string; query: string }[] {
+  const l = lang.toLowerCase()
+  return [
+    { id: `ytm-${l}-top`, title: `Top ${lang} songs`, query: `top ${l} songs` },
+    { id: `ytm-${l}-new`, title: `New in ${lang}`, query: `latest ${l} songs` },
+    { id: `ytm-${l}-romance`, title: `${lang} romance`, query: `${l} romantic songs` },
+    { id: `ytm-${l}-lofi`, title: `${lang} lo-fi chill`, query: `${l} lofi songs` },
+    { id: 'ytm-global', title: 'Global top hits', query: 'top global hits' }
+  ]
+}
 
 export function createYtmProvider(api: Pick<VegaDesktopApi, 'ytm' | 'ytdlp'>): SourceProvider {
   const toTrack = (s: Song): Track => ({
@@ -73,10 +82,11 @@ export function createYtmProvider(api: Pick<VegaDesktopApi, 'ytm' | 'ytdlp'>): S
       void api.ytdlp.warm(id)
     },
     async browse(): Promise<Shelf[]> {
-      const rows = await Promise.allSettled(YTM_SHELVES.map((s) => api.ytm.search(s.query, 16)))
+      const defs = ytmShelves(language)
+      const rows = await Promise.allSettled(defs.map((s) => api.ytm.search(s.query, 16)))
       const shelves: Shelf[] = []
       rows.forEach((r, i) => {
-        if (r.status === 'fulfilled' && r.value.length) shelves.push({ id: YTM_SHELVES[i]!.id, title: YTM_SHELVES[i]!.title, tracks: r.value.map(toTrack) })
+        if (r.status === 'fulfilled' && r.value.length) shelves.push({ id: defs[i]!.id, title: defs[i]!.title, tracks: r.value.map(toTrack) })
       })
       if (!shelves.length) throw new Error('YouTube Music unavailable')
       return shelves
