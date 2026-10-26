@@ -86,6 +86,7 @@ describe('StreamCache', () => {
     await c.fill('https://a/2')
     const old = new Date(Date.now() - 100_000)
     const h1 = await c.lookup('https://a/1')
+    await new Promise((r) => setTimeout(r, 40)) // lookup touches the file in the background; let that land first
     await utimes(h1!.path, old, old) // make #1 the oldest
     await c.fill('https://a/3') // 3000 bytes > 2500 -> evict oldest
     expect(await c.lookup('https://a/1')).toBeNull()
