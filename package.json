@@ -1,7 +1,7 @@
 {
   "name": "vega",
   "productName": "Vega",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Standalone personal music app: search, library, playlists, analytics, recommendations",
   "author": "Dhruv Harani",
   "license": "MIT",
