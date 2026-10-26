@@ -1,6 +1,6 @@
 import { useIdle } from '@/hooks/useIdle'
 import { usePlayerView } from '@/hooks/usePlayerView'
-import { formatTime, joinArtists } from '@/lib/format'
+import { joinArtists } from '@/lib/format'
 import { useBgState } from '@/store/bgState'
 import { usePlayer } from '@/store/player'
 import { useSettings } from '@/store/settings'
@@ -56,14 +56,6 @@ export function FullscreenPlayer() {
         <div className="full__body">
           {cinema ? (
             <>
-              <div className="cine-ttl">
-                <Artwork url={track.artworkUrl} size={84} radius={22} className="artwork--lift" />
-                <div>
-                  <h2 title={track.title}>{track.title}</h2>
-                  <p>{joinArtists(track.artists)}</p>
-                  <span className="cine-tag">{[track.album, track.releaseYear, formatTime(track.durationMs)].filter(Boolean).join(' · ')}</span>
-                </div>
-              </div>
               <div className="cine-dock">
                 <div className="cine-l">
                   <Artwork url={track.artworkUrl} size={48} radius={24} />

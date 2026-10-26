@@ -46,7 +46,7 @@
 .cine-c { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
 .cine-c .progress, .cine-c > :last-child { width: 100%; max-width: 520px; }
 .cine-r { display: flex; justify-content: flex-end; align-items: center; gap: 14px; }
-.full.is-cinema.is-idle .cine-dock, .full.is-cinema.is-idle .cine-ttl, .full.is-cinema.is-df .cine-dock { opacity: 0; pointer-events: none; }
+.full.is-cinema.is-idle .cine-dock, .full.is-cinema.is-df .cine-dock { opacity: 0; pointer-events: none; }
 .full.is-cinema.is-idle .cine-pills { opacity: 0; pointer-events: none; }
 
 /* scrim like the design: dark on the left where the type sits, the picture open on the right */
@@ -59,7 +59,7 @@
   right: auto;
   width: min(62vw, 880px);
   top: 11%;
-  bottom: clamp(220px, 30vh, 300px);
+  bottom: clamp(130px, 18vh, 170px);
 }
 :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics__inner { padding: 14cqh 0 36cqh; }
 :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric {
