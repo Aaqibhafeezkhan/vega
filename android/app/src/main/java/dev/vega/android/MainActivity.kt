@@ -29,7 +29,7 @@ import androidx.webkit.WebViewFeature
 import org.json.JSONObject
 
 /**
- * Hosts the hosted Vega web app (https://vega-psi-lac.vercel.app) in a WebView: the same build the browser gets, so
+ * Hosts the hosted Vega web app (https://vega-musicv1.vercel.app) in a WebView: the same build the browser gets, so
  * relative /api calls, the CSP and YouTube's embedded player work unchanged. Native code only adds what a WebView
  * cannot do alone: background audio (see [PlaybackService]), the back button, system bars and external links.
  */
