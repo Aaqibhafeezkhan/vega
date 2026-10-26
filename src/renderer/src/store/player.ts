@@ -4,6 +4,7 @@ import type { Track } from '@shared/types'
 import { backend } from '@/lib/backend'
 import { sources } from '@/lib/sources'
 import { load, save } from '@/lib/persist'
+import { startKeepAlive, stopKeepAlive } from '@/lib/keepAlive'
 import { offlineUrl } from '@/lib/offline'
 import { pingPlay } from '@/lib/trending'
 import { ytEmbed } from '@/lib/ytEmbed'
@@ -70,6 +71,7 @@ function shuffled<T>(arr: T[]): T[] {
 
 let loadToken = 0
 let savedUrl: string | null = null
+let wantPlay = false
 let embedTimer: ReturnType<typeof setInterval> | null = null
 
 /** Live playback position in ms (the store value only updates on timeupdate, ~4 Hz). */
@@ -99,6 +101,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
         audio.pause()
         audio.removeAttribute('src')
         embedActive = true
+        wantPlay = true
+        startKeepAlive()
         await ytEmbed.load(stream.videoId)
         if (token !== loadToken) return
         ytEmbed.setVolume(get().volume)
@@ -108,6 +112,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         if (embedActive) {
           embedActive = false
           ytEmbed.stop()
+          stopKeepAlive()
           if (embedTimer) clearInterval(embedTimer)
           embedTimer = null
         }
@@ -150,6 +155,11 @@ export const usePlayer = create<PlayerState>((set, get) => {
       if (!embedActive) return
       if (s === 'playing') set({ playing: true, loading: false })
       else if (s === 'paused') {
+        // the browser pauses embeds when the tab is hidden (screen off, app switch): resume unless the user paused
+        if (document.hidden && wantPlay) {
+          ytEmbed.play()
+          return
+        }
         if (session) session.lastTick = null
         set({ playing: false })
       } else if (s === 'ended') {
@@ -226,8 +236,14 @@ export const usePlayer = create<PlayerState>((set, get) => {
 
     togglePlay: () => {
       if (embedActive && get().index >= 0) {
-        if (get().playing) ytEmbed.pause()
-        else ytEmbed.play()
+        wantPlay = !get().playing
+        if (get().playing) {
+          ytEmbed.pause()
+          stopKeepAlive()
+        } else {
+          ytEmbed.play()
+          startKeepAlive()
+        }
       } else if (audio.src && !audio.ended && get().index >= 0) {
         if (audio.paused) void audio.play()
         else audio.pause()
@@ -249,6 +265,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
         if (!auto) return
         audio.pause()
         if (embedActive) {
+          wantPlay = false
+          stopKeepAlive()
           ytEmbed.pause()
           ytEmbed.seek(0)
         } else audio.currentTime = 0
@@ -318,10 +336,10 @@ export const usePlayer = create<PlayerState>((set, get) => {
 
 function updateMediaSession(t: Track): void {
   if (!('mediaSession' in navigator)) return
-  navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artists.join(', '), album: t.album ?? '' })
+  navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artists.join(', '), album: t.album ?? '', artwork: t.artworkUrl ? [{ src: t.artworkUrl, sizes: '544x544' }] : [] })
   const p = usePlayer.getState()
-  navigator.mediaSession.setActionHandler('play', () => p.togglePlay())
-  navigator.mediaSession.setActionHandler('pause', () => p.togglePlay())
+  navigator.mediaSession.setActionHandler('play', () => !usePlayer.getState().playing && p.togglePlay())
+  navigator.mediaSession.setActionHandler('pause', () => usePlayer.getState().playing && p.togglePlay())
   navigator.mediaSession.setActionHandler('nexttrack', () => usePlayer.getState().next())
   navigator.mediaSession.setActionHandler('previoustrack', () => usePlayer.getState().prev())
 }

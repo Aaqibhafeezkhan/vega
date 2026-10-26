@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Vega" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/vega_bg</item>
+        <item name="android:statusBarColor">@color/vega_bg</item>
+        <item name="android:navigationBarColor">@color/vega_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowSplashScreenBackground">@color/vega_icon_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
+</resources>

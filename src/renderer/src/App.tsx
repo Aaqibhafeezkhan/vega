@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import './store/auth' // starts session restore and background sync
 import { CommandPalette } from './components/CommandPalette'
 import { EqPanel } from './components/EqPanel'
+import { initAndroidBridge } from './lib/androidBridge'
 import { warmAudioOutput } from './lib/audioWarmup'
 import { resumeEq } from './lib/eq'
 import { PlayerBar } from './components/PlayerBar'
@@ -47,6 +48,7 @@ export function App() {
   useEffect(() => {
     void useCatalog.getState().refresh()
     warmAudioOutput()
+    initAndroidBridge()
   }, [])
 
   // Background enrichment: learn genres for artists we know nothing about (1 request/s, cached).
