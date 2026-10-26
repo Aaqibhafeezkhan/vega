@@ -207,3 +207,11 @@ code { background: rgba(255, 255, 255, 0.08); padding: 1px 5px; border-radius: 4
 .rule select, .rule-head select, .rule input { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 8px 10px; font-size: 13px; outline: none; }
 .rule input { width: 160px; }
 .rule input[type=number] { width: 90px; }
+
+.queue { display: flex; flex-direction: column; min-height: 0; }
+.queue-list { overflow-y: auto; min-height: 0; flex: 1; }
+.cover-btn { display: block; border-radius: 8px; }
+.cover-btn:hover { filter: brightness(1.15); }
+.lyra-overlay { position: fixed; inset: 0; z-index: 50; background: #000; animation: lyra-in 0.25s ease both; }
+.lyra-frame { width: 100%; height: 100%; border: 0; display: block; }
+@keyframes lyra-in { from { opacity: 0; } to { opacity: 1; } }

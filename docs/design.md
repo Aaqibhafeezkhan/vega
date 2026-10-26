@@ -235,6 +235,15 @@ Honest limit of "like Spotify": the web app can offer the player, library, playl
 is whatever sources allow browser access (Audius, Jamendo, user's own files). A Spotify-sized catalog needs YouTube-class
 sources that browsers cannot call (CORS) and that carry ToS risk when run as a public hosted service; those stay desktop/self-hosted.
 
+## 12.3 Lyra integration
+
+Lyra (P:\Song Player, same author) is vendored under `lyra/` (renderer, core, shared) and built by `vite.lyra.config.ts` into
+`src/renderer/public/lyra`, so every Vega build serves it at `/lyra/`. Vega shows it full screen in an iframe.
+`lyra/host/api.ts` implements Lyra's `window.lyra` API (like Lyra's Android bridge): playback state and commands come from Vega
+through `window.__vegaHost` (`src/renderer/src/lib/lyraHost.ts`), lyrics/backgrounds use Lyra's own core. An iframe keeps Lyra's
+global CSS and behaviour untouched. The packaged desktop UI is served from a `vega-app://` origin so parent and iframe can talk.
+To update Lyra, re-copy its `src/renderer`, `src/core`, `src/shared` into `lyra/` (host/ is Vega's own).
+
 ## 13. Repo layout
 
 ```
@@ -256,7 +265,7 @@ docs/          design, ADRs, provider notes
 | **M3 (done)** | Audius (no key), Jamendo (free client id) and Internet Archive providers; desktop stream cache (disk LRU, offline replay, https-public-only proxy); source chips; stream-error skip | Search/browse returns online results; plays with no key; replays work offline on desktop |
 | **M4 (done)** | Accounts + cloud sync (Supabase): email auth, Postgres with RLS, sync of likes/playlists/history (see docs/supabase-setup.md) | Sign in on web or desktop, library follows you across devices |
 | **M5 (done)** | Metadata + recommendations v2: MusicBrainz artist genres (cached, 1 req/s), Last.fm similar artists (optional key), session co-listening, radio from any track, smart playlists (synced), search ranking. Cover Art Archive enrichment deferred | Daily Mix and Discover use real tags; smart playlists update live |
-| **M6 (done)** | Lyra integration (ported lrc/wordTiming/match/romanize + LRCLIB provider): synced lyrics in a side panel, fullscreen now-playing with artwork-derived colours, karaoke mode, word-by-word estimates, per-song offset, romanization | Lyrics follow Vega playback. Lyra's Spotify poller, moments/share cards/studio export and jam/nearby features are not ported |
+| **M6 (done)** | Lyra's real player UI inside Vega (vendored in `lyra/`): backdrop and video backgrounds, synced and word-by-word lyrics, karaoke, themes/settings, wrong-lyrics picker, per-song offset. Runs in a same-origin iframe against a Vega-backed `window.lyra` bridge (same pattern as Lyra's Android build) | Lyra's player follows Vega's playback and controls it. Not ported: Spotify, window modes/widgets, studio video export, jam/nearby |
 | M7 | Optional power providers (yt-dlp, Piped fallback), radio (radio-browser), EQ, desktop installer | Installable build |
 | M8 | Android shell | Parity |
 

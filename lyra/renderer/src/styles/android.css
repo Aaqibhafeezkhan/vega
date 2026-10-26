@@ -1,0 +1,196 @@
+/* Phone-only tweaks. Everything is scoped to data-platform="android" so the Windows app is unaffected. */
+
+[data-platform='android'] {
+  -webkit-tap-highlight-color: transparent;
+}
+[data-platform='android'] body {
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* window controls that mean nothing on a phone */
+[data-platform='android'] [aria-label='Minimize'],
+[data-platform='android'] [aria-label='Collapse to widget'],
+[data-platform='android'] [aria-label='Quit Lyra'],
+[data-platform='android'] [aria-label='Resize'],
+[data-platform='android'] .grip {
+  display: none !important;
+}
+/* touch-sized controls */
+[data-platform='android'] .ibtn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ---------- cinema layout on a phone: video full-bleed, lyrics in the lower half, compact dock at the bottom ---------- */
+[data-platform='android'] .full.is-cinema .full__top {
+  height: 56px;
+  padding: 0 6px 0 16px;
+}
+[data-platform='android'] .full.is-cinema .full__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 14px 10px;
+}
+[data-platform='android'] .full.is-cinema .full__lyrics {
+  grid-column: auto;
+  flex: 0 1 44%;
+  min-height: 160px;
+  padding: 0 2px;
+}
+[data-platform='android'] .full.is-cinema .full__side {
+  position: static;
+  width: auto;
+  min-width: 0;
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-radius: 22px;
+  gap: 12px;
+}
+[data-platform='android'] .lyrics--full {
+  --lyric-size: 30px !important;
+}
+
+/* lyrics above, dock at the very bottom; a little smaller so more of the video shows */
+[data-platform='android'] .full.is-cinema .full__lyrics {
+  order: 1;
+  flex-basis: 40%;
+}
+[data-platform='android'] .full.is-cinema .full__side {
+  order: 2;
+}
+[data-platform='android'] .lyrics--full {
+  --lyric-size: 27px !important;
+}
+
+/* ---------- phone cinema: smaller dock, tidier header, lyrics options moved up under the header ---------- */
+[data-platform='android'] .full.is-cinema .full__side {
+  padding: 8px 12px 8px 8px;
+  gap: 10px;
+  border-radius: 20px;
+}
+[data-platform='android'] .full.is-cinema .full__side .artwork {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 10px !important;
+}
+[data-platform='android'] .full.is-cinema .full__titles h1 {
+  font-size: 16px;
+}
+[data-platform='android'] .full.is-cinema .full__artist {
+  font-size: 12.5px;
+  margin-top: 1px;
+}
+[data-platform='android'] .full.is-cinema .full__chrome {
+  gap: 4px;
+}
+[data-platform='android'] .full.is-cinema .transport .ibtn {
+  width: 40px;
+  height: 40px;
+}
+[data-platform='android'] .full__device {
+  display: none; /* "Playing on this phone" is obvious and wrapped onto two lines */
+}
+[data-platform='android'] .full__top {
+  justify-content: flex-end;
+}
+/* the "LRCLIB · words estimated · Wrong lyrics? · sync" strip becomes a small pill under the header */
+[data-platform='android'] .full .lyrics__footer {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 62px);
+  right: 14px;
+  z-index: 5;
+  padding: 3px 10px;
+  gap: 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.38);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: opacity 0.5s var(--ease);
+}
+[data-platform='android'] .full .lyrics__source > span {
+  display: none; /* provider / "words estimated" text */
+}
+[data-platform='android'] .full.is-idle .lyrics__footer {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- floating widget page ---------- */
+[data-overlay] html,
+[data-overlay] body,
+html[data-overlay] body {
+  background: transparent !important;
+}
+html[data-overlay] .shell {
+  border-radius: 0;
+  box-shadow: none;
+}
+html[data-overlay] .widget__actions {
+  opacity: 1;
+}
+
+[data-platform='android'] .full.is-cinema .full__side {
+  align-self: stretch;
+  justify-self: stretch;
+}
+
+/* ---------- phone expanded player: header, title and controls fade away when idle; touch brings them back ---------- */
+[data-platform='android'] .mini__head,
+[data-platform='android'] .mini__card {
+  transition: opacity 0.6s var(--ease);
+}
+[data-platform='android'] .mini.is-idle .mini__head,
+[data-platform='android'] .mini.is-idle .mini__card {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* the phone has one player (this one): no fullscreen / cinema mode, and "also in mini player" has no meaning */
+[data-platform='android'] [aria-label='Fullscreen lyrics'],
+[data-platform='android'] [aria-label='Exit fullscreen (Esc)'] {
+  display: none !important;
+}
+
+/* when the title and controls fade away, they fold up and the lyrics grow into the space (and settle back on touch) */
+[data-platform='android'] .mini__card {
+  max-height: 320px;
+  overflow: hidden;
+  transition:
+    opacity 0.6s var(--ease),
+    max-height 0.7s var(--ease);
+}
+[data-platform='android'] .mini.is-idle .mini__card {
+  max-height: 0;
+}
+[data-platform='android'][data-bg-media='mini'] .mini__lyrics {
+  transition: height 0.7s var(--ease);
+}
+[data-platform='android'][data-bg-media='mini'] .mini.is-idle .mini__lyrics {
+  height: clamp(280px, 48vh, 460px);
+}
+
+/* the small moon switch for ambient mode (next to Settings in the header; also on the ambient screen) */
+.ambsw {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+  color: var(--fg-3);
+}
+.switch--sm {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+}
+.switch--sm i {
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+}
+.switch--sm[aria-checked='true'] i {
+  transform: translateX(14px);
+}

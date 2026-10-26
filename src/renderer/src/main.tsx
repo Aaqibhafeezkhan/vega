@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/inter'
 import './styles/app.css'
-import './styles/lyrics.css'
 import { initStorage } from './lib/persist'
 
 // Stores read persisted state at import time, so storage must be loaded before the app module is evaluated.

@@ -9,3 +9,4 @@ dist-web
 !.env.example
 
 .vercel
+src/renderer/public/lyra

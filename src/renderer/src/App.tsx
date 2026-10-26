@@ -13,7 +13,7 @@ import { Library } from './views/Library'
 import { PlaylistView } from './views/PlaylistView'
 import { Search } from './views/Search'
 import { Account } from './views/Account'
-import { NowPlaying } from './views/NowPlaying'
+import { LyraPlayer } from './views/LyraPlayer'
 import { SmartView } from './views/SmartView'
 import { Sources } from './views/Sources'
 import { Stats } from './views/Stats'
@@ -65,7 +65,7 @@ export function App() {
       </main>
       {panel && <QueuePanel />}
       <PlayerBar />
-      {nowPlaying && <NowPlaying />}
+      {nowPlaying && <LyraPlayer />}
     </div>
   )
 }

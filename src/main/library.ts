@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol } from 'electron'
-import { join } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { CH, EV, MEDIA_SCHEME } from '@shared/ipc'
+import { APP_SCHEME, CH, EV, MEDIA_SCHEME } from '@shared/ipc'
 import type { ScanProgress } from '@shared/library'
 import { LibraryDb, rowToTrack } from './db'
 import { scanFolder } from './scanner'
@@ -15,7 +15,8 @@ const scanning = new Set<number>()
 /** Must run before app is ready: lets the renderer stream <audio> from vega-media:// with Range support. */
 export function registerMediaScheme(): void {
   protocol.registerSchemesAsPrivileged([
-    { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } }
+    { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } },
+    { scheme: APP_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }
   ])
 }
 
@@ -33,6 +34,17 @@ async function runScan(folderId: number): Promise<void> {
   } finally {
     scanning.delete(folderId)
   }
+}
+
+/** vega-app://app/<path> -> files of the built renderer (out/renderer), with path traversal blocked. */
+export function serveApp(rendererDir: string): void {
+  const root = resolve(rendererDir)
+  protocol.handle(APP_SCHEME, (req) => {
+    const rel = decodeURIComponent(new URL(req.url).pathname).replace(/^\/+/, '') || 'index.html'
+    const full = resolve(root, rel.endsWith('/') ? `${rel}index.html` : rel)
+    if (full !== root && !full.startsWith(root + sep)) return new Response('forbidden', { status: 403 })
+    return net.fetch(pathToFileURL(full).toString())
+  })
 }
 
 export function initLibrary(): void {

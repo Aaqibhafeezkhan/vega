@@ -1,6 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
-import { initLibrary, registerMediaScheme } from './library'
+import { initLibrary, registerMediaScheme, serveApp } from './library'
 
 registerMediaScheme()
 
@@ -31,11 +31,12 @@ function createWindow(): void {
   })
   const devUrl = process.env['ELECTRON_RENDERER_URL']
   if (!app.isPackaged && devUrl) void win.loadURL(devUrl)
-  else void win.loadFile(join(__dirname, '../renderer/index.html'))
+  else void win.loadURL('vega-app://app/index.html')
 }
 
 app.whenReady().then(() => {
   initLibrary()
+  serveApp(join(__dirname, '../renderer'))
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

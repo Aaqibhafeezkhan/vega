@@ -20,7 +20,7 @@ Optional accounts (Supabase): sign in to sync likes, playlists and listening his
 
 Recommendations: genres learned from MusicBrainz, optional Last.fm similar artists, session co-listening, radio from any song, rule-based smart playlists.
 
-Lyrics: synced lyrics from LRCLIB (ported from Lyra) in the side panel, a fullscreen player with colours from the cover art, karaoke mode (K), word-by-word highlighting, per-song timing offset.
+Lyra player: the lyrics button opens Lyra's own fullscreen player (backdrop and video backgrounds, synced word-by-word lyrics, karaoke, themes) driven by Vega's playback.
 
 Works today: search, play/queue/shuffle/repeat, likes, playlists (create, rename, reorder, delete), listening
 insights (top artists/genres/tracks, clock, streak), recommendations (Made for you, Discover), persisted locally (SQLite / IndexedDB) and synced when signed in.
@@ -48,6 +48,7 @@ src/providers/   mock, local, audius, jamendo, archive, metadata (MusicBrainz, L
 src/renderer/    React UI, stores, audio engine (store/player.ts)
 src/main/        Electron shell: SQLite (db.ts), folder scanner, vega-media:// protocol, IPC
 src/preload/     contextBridge API
+lyra/            Lyra's player UI (vendored) + host/ bridge to Vega; built to /lyra by `npm run build:lyra`
 ```
 
 ## License

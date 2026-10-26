@@ -46,3 +46,6 @@ export interface VegaDesktopApi {
 
 /** Custom protocol that serves library audio/artwork to the renderer (supports Range requests). */
 export const MEDIA_SCHEME = 'vega-media'
+
+/** Serves the packaged UI (index.html and Lyra's iframe page) from a real origin instead of file://, so the two pages can talk. */
+export const APP_SCHEME = 'vega-app'

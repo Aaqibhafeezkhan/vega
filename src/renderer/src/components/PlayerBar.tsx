@@ -73,14 +73,11 @@ export function PlayerBar() {
       </div>
 
       <div className="pb-right">
-        <button className={`icon-btn${panel === 'lyrics' ? ' on' : ''}`} onClick={() => togglePanel('lyrics')} aria-label="Lyrics" title="Lyrics">
+        <button className="icon-btn" onClick={openNowPlaying} aria-label="Lyrics" title="Lyrics and fullscreen player (Lyra)" disabled={!track}>
           <Icon name="lyrics" size={20} />
         </button>
         <button className={`icon-btn${panel === 'queue' ? ' on' : ''}`} onClick={() => togglePanel('queue')} aria-label="Queue" title="Queue">
           <Icon name="queue" size={20} />
-        </button>
-        <button className="icon-btn" onClick={openNowPlaying} aria-label="Full screen" title="Full screen lyrics" disabled={!track}>
-          <Icon name="expand" size={20} />
         </button>
         <Icon name="volume" size={18} />
         <input

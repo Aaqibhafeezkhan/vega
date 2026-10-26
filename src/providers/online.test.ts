@@ -4,7 +4,6 @@ import { createJamendoProvider } from './jamendo'
 import { createArchiveProvider } from './archive'
 import { createMusicBrainz } from './metadata/musicbrainz'
 import { createLastFm } from './metadata/lastfm'
-import { LrcLibProvider } from './lyrics/lrclib'
 
 const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
@@ -158,36 +157,5 @@ describe('metadata providers', () => {
     expect(await lf.similarArtists('M83')).toEqual(['Daft Punk', 'Justice'])
     expect(await lf.similarTracks('M83', 'Midnight City')).toEqual([{ artist: 'Band', title: 'Song' }])
     expect(await lf.validate()).toBe(false)
-  })
-})
-
-describe('lrclib provider', () => {
-  const rec = { id: 1, trackName: 'Midnight City', artistName: 'M83', albumName: 'HUWD', duration: 244, instrumental: false, plainLyrics: 'plain', syncedLyrics: '[00:10.00]Waiting in a car' }
-
-  it('finds synced lyrics by exact signature and sends a client header', async () => {
-    const f = vi.fn(async (_u: unknown, _o: unknown) => json(rec))
-    const p = new LrcLibProvider(f as unknown as typeof fetch)
-    const r = await p.fetch({ trackId: 'x', title: 'Midnight City', artist: 'M83', album: 'HUWD', durationMs: 244_000 }, new AbortController().signal)
-    expect(r).toMatchObject({ kind: 'found', synced: '[00:10.00]Waiting in a car', matched: { title: 'Midnight City' } })
-    const [url, init] = f.mock.calls[0] as unknown as [string, { headers: Record<string, string> }]
-    expect(url).toContain('/get?')
-    expect(url).toContain('duration=244')
-    expect(Object.keys(init.headers)).toContain('Lrclib-Client')
-    expect(Object.keys(init.headers)).not.toContain('User-Agent')
-  })
-
-  it('rejects a wrong song and reports none', async () => {
-    const wrong = { ...rec, trackName: 'Completely Different', artistName: 'Someone Else', duration: 100 }
-    const f = async (u: unknown): Promise<Response> => (String(u).includes('/search') ? json([wrong]) : json(wrong))
-    const p = new LrcLibProvider(f as unknown as typeof fetch)
-    const r = await p.fetch({ trackId: 'x', title: 'Midnight City', artist: 'M83', album: '', durationMs: 244_000 }, new AbortController().signal)
-    expect(r).toEqual({ kind: 'none' })
-  })
-
-  it('rate limit becomes a retryable error with cooldown', async () => {
-    const f = async (): Promise<Response> => new Response('', { status: 429, headers: { 'retry-after': '12' } })
-    const p = new LrcLibProvider(f as unknown as typeof fetch)
-    await expect(p.fetch({ trackId: 'x', title: 'A', artist: 'B', album: '', durationMs: 1000 }, new AbortController().signal)).rejects.toMatchObject({ kind: 'rate-limit', retryable: true, retryAfterSec: 12 })
-    await expect(p.fetch({ trackId: 'x', title: 'A', artist: 'B', album: '', durationMs: 1000 }, new AbortController().signal)).rejects.toMatchObject({ kind: 'rate-limit' })
   })
 })
