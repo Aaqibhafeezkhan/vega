@@ -12,11 +12,11 @@ function devApi(): Plugin {
         const m = /^\/api\/(ytm)\/(search|shelves)$/.exec(url.pathname)
         if (!m) return next()
         try {
-          const mod = (await server.ssrLoadModule(`/../../api/${m[1]}/${m[2]}.ts`)) as { GET: (r: Request) => Promise<Response> }
-          const out = await mod.GET(new Request(url))
+          const mod = (await server.ssrLoadModule(`/../../api/${m[1]}/${m[2]}.ts`)) as { run: (u: URL) => Promise<{ status: number; body: unknown }> }
+          const out = await mod.run(url)
           res.statusCode = out.status
-          out.headers.forEach((v, k) => res.setHeader(k, v))
-          res.end(Buffer.from(await out.arrayBuffer()))
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify(out.body))
         } catch (err) {
           res.statusCode = 500
           res.end(String(err))

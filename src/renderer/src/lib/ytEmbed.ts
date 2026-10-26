@@ -74,6 +74,7 @@ class YtEmbed {
     await loadApi()
     const host = this.mount()
     host.dataset.on = '1'
+    this.track()
     if (this.player) return this.player
     return new Promise<YtPlayer>((resolve) => {
       const player = new window.YT!.Player(host.querySelector('.yt-embed-target') as HTMLElement, {
@@ -144,10 +145,31 @@ class YtEmbed {
   duration(): number {
     return this.player?.getDuration() ?? 0
   }
+  private raf = 0
+
+  /** The iframe is one fixed element that follows whichever slot is on screen: the lyrics panel, else the dock cover. */
+  private track(): void {
+    cancelAnimationFrame(this.raf)
+    const host = this.host
+    if (!host || !host.dataset.on) return
+    const slot = (document.querySelector('[data-embed-slot="panel"]') ?? document.querySelector('[data-embed-slot="dock"]')) as HTMLElement | null
+    if (slot) {
+      const r = slot.getBoundingClientRect()
+      const s = host.style
+      host.dataset.slot = slot.dataset.embedSlot
+      s.left = `${r.left}px`
+      s.top = `${r.top}px`
+      s.width = `${r.width}px`
+      s.height = `${r.height}px`
+    } else delete host.dataset.slot
+    this.raf = requestAnimationFrame(() => this.track())
+  }
+
   /** Leaves embed mode (another source is playing): stop and hide the card. */
   stop(): void {
     this.pending = null
     this.player?.stopVideo()
+    cancelAnimationFrame(this.raf)
     if (this.host) delete this.host.dataset.on
   }
 }

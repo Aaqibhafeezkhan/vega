@@ -107,8 +107,11 @@ kbd { font-family: var(--mono); }
 .collection-head h1 { font-size: clamp(44px, 6vw, 88px); }
 .chart-empty { color: var(--muted); padding: 24px 0; }
 
-/* ---------- web YouTube embedded player (kept visible, above the dock) ---------- */
-.yt-embed { position: fixed; right: 18px; bottom: calc(var(--dock-h) + 14px); width: 256px; height: 144px; z-index: 30; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line); background: #000; display: none; }
+/* ---------- web YouTube embedded player: sits in a slot (lyrics panel, else dock cover) ---------- */
+.yt-embed { position: fixed; left: 0; top: 0; width: 56px; height: 56px; z-index: 36; border-radius: 15px; overflow: hidden; background: #000; display: none; pointer-events: none; }
 .yt-embed[data-on='1'] { display: block; }
+.yt-embed:not([data-slot]) { left: auto; top: auto; right: 18px; bottom: calc(var(--dock-h) + 14px); width: 256px; height: 144px; pointer-events: auto; border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+.yt-embed[data-slot='panel'] { border-radius: 18px; pointer-events: auto; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
 .yt-embed iframe { width: 100%; height: 100%; border: 0; display: block; }
-@media (max-width: 700px) { .yt-embed { width: 176px; height: 99px; right: 10px; } }
+.embed-slot { flex: none; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; margin-top: 4px; }
+.drawer:has(.embed-slot) .lyra-panel-frame { margin-top: 10px; }
