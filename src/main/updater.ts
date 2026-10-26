@@ -5,6 +5,24 @@ import { UPDATE_CH, type UpdateState } from '@shared/ipc'
 const CHECK_EVERY_MS = 4 * 3600_000
 
 let state: UpdateState = { state: 'idle' }
+let installing = false
+
+const SPLASH = (v: string): string =>
+  'data:text/html;charset=utf-8,' +
+  encodeURIComponent(`<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;gap:16px;background:#0b0c14;color:#f6f3ec;font:600 15px system-ui,sans-serif;border:1px solid #2a2c3a;box-sizing:border-box">
+<style>i{width:22px;height:22px;border-radius:50%;border:3px solid #ffffff30;border-top-color:#ff7a1a;animation:s .8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}</style>
+<i></i><div>Updating Vega${v ? ' to ' + v : ''}…<div style="font-weight:400;font-size:12px;opacity:.6;margin-top:4px">It will be ready in a moment</div></div></body>`)
+
+/** Closes the app into the installer: an "Updating" window first, then the installer (with its own progress) so the app is never silently missing. */
+function installNow(): void {
+  if (installing || state.state !== 'ready') return
+  installing = true
+  const splash = new BrowserWindow({ width: 380, height: 120, frame: false, resizable: false, alwaysOnTop: true, show: false, backgroundColor: '#0b0c14', webPreferences: { sandbox: true } })
+  splash.once('ready-to-show', () => splash.show())
+  void splash.loadURL(SPLASH(state.version ?? ''))
+  for (const w of BrowserWindow.getAllWindows()) if (w !== splash) w.destroy()
+  setTimeout(() => autoUpdater.quitAndInstall(false, true), 1200)
+}
 
 function set(next: UpdateState): void {
   state = next
@@ -13,7 +31,7 @@ function set(next: UpdateState): void {
 
 /**
  * Auto-update from the project's GitHub releases (electron-updater reads latest.yml next to the installer).
- * Downloads in the background, installs when the app quits (or on "Restart to update"). Only for the installed app.
+ * Downloads in the background; on quit (or "Restart to update") an Updating window shows while the installer runs, then the app reopens updated. Only for the installed app.
  */
 export function initUpdater(getAuto: () => boolean): void {
   ipcMain.handle(UPDATE_CH.get, () => state)
@@ -27,7 +45,9 @@ export function initUpdater(getAuto: () => boolean): void {
   }
 
   autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true
+  // Installing silently after exit left a window where the app was missing (reopening mid-install: "app not found").
+  // Instead we hold the quit, show our own "Updating" window, then run the installer with its progress window visible.
+  autoUpdater.autoInstallOnAppQuit = false
   autoUpdater.logger = null
   autoUpdater.on('checking-for-update', () => set({ state: 'checking' }))
   autoUpdater.on('update-available', (i) => set({ state: 'downloading', version: i.version, percent: 0 }))
@@ -44,8 +64,12 @@ export function initUpdater(getAuto: () => boolean): void {
     }
   }
   ipcMain.handle(UPDATE_CH.check, check)
-  ipcMain.handle(UPDATE_CH.install, () => {
-    if (state.state === 'ready') autoUpdater.quitAndInstall(true, true)
+  ipcMain.handle(UPDATE_CH.install, () => installNow())
+
+  app.on('before-quit', (e) => {
+    if (installing || state.state !== 'ready') return
+    e.preventDefault()
+    installNow()
   })
 
   setTimeout(() => getAuto() && void check(), 10_000)
