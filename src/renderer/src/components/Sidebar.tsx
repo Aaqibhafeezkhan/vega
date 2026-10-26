@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLibrary } from '@/store/library'
+import { useAuth } from '@/store/auth'
 import { useUi, type View } from '@/store/ui'
 import { Icon } from './Icon'
 
@@ -16,6 +17,7 @@ export function Sidebar() {
   const go = useUi((s) => s.go)
   const playlists = useLibrary((s) => s.playlists)
   const createPlaylist = useLibrary((s) => s.createPlaylist)
+  const auth = useAuth()
   const [naming, setNaming] = useState(false)
   const [name, setName] = useState('')
 
@@ -75,6 +77,15 @@ export function Sidebar() {
         ))}
         {!playlists.length && !naming && <div className="muted small">No playlists yet</div>}
       </div>
+      <button className={`account-chip${view.name === 'account' ? ' on' : ''}`} onClick={() => go({ name: 'account' })}>
+        <span className={`avatar sync-${auth.user ? auth.sync : 'off'}`}>{auth.user?.email?.charAt(0).toUpperCase() ?? '?'}</span>
+        <span className="account-text">
+          <span>{auth.user ? (auth.user.user_metadata?.display_name ?? auth.user.email) : 'Sign in'}</span>
+          <span className="muted small">
+            {!auth.enabled ? 'Local only' : auth.user ? (auth.sync === 'syncing' ? 'Syncing…' : auth.sync === 'error' ? 'Sync problem' : 'Synced') : 'Sync across devices'}
+          </span>
+        </span>
+      </button>
     </aside>
   )
 }

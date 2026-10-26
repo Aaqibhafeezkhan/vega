@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: './',
   root: resolve(__dirname, 'src/renderer'),
+  envDir: __dirname, // repo-root .env; only VITE_* variables reach the client bundle
   resolve: {
     alias: {
       '@shared': resolve(__dirname, 'src/shared'),

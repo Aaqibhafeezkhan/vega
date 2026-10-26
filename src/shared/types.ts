@@ -30,6 +30,8 @@ export interface Playlist {
   name: string
   description?: string
   createdAt: number
+  /** Last edit time (ms); drives cloud sync conflict resolution. */
+  updatedAt?: number
   tracks: Track[]
 }
 

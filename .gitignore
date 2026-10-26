@@ -4,3 +4,6 @@ release
 dist
 *.log
 dist-web
+.env
+.env.*
+!.env.example

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type View = { name: 'home' } | { name: 'search' } | { name: 'library' } | { name: 'stats' } | { name: 'sources' } | { name: 'playlist'; id: string }
+export type View = { name: 'home' } | { name: 'search' } | { name: 'library' } | { name: 'stats' } | { name: 'sources' } | { name: 'account' } | { name: 'playlist'; id: string }
 
 interface UiState {
   view: View

@@ -1,14 +1,21 @@
 import { create } from 'zustand'
 import { refKey, type PlayEvent, type Playlist, type Track } from '@shared/types'
+import { eventId, type Versioned } from '@shared/sync'
 import { useCatalog } from './catalog'
 import { load, save } from '@/lib/persist'
 
 const MAX_EVENTS = 5000
-const uid = (): string => Math.random().toString(36).slice(2, 10)
+const uid = (): string => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
+
+/** Edit time per liked track; `del` marks an un-like so it can sync as a tombstone. */
+type LikeMeta = Record<string, { at: number; del: boolean }>
 
 interface LibraryState {
   liked: Track[]
+  likedMeta: LikeMeta
   playlists: Playlist[]
+  /** Deleted playlist id -> deletion time (tombstones for sync). */
+  playlistTombs: Record<string, number>
   events: PlayEvent[]
   isLiked: (t: Track) => boolean
   toggleLike: (t: Track) => void
@@ -21,105 +28,162 @@ interface LibraryState {
   logPlay: (e: PlayEvent) => void
   seedDemoHistory: () => void
   clearHistory: () => void
+  /** Sync support */
+  snapshotLikes: () => Versioned<Track>[]
+  snapshotPlaylists: () => Versioned<Playlist>[]
+  applyRemote: (r: { likes?: Versioned<Track>[]; playlists?: Versioned<Playlist>[]; events?: PlayEvent[] }) => void
+  wipeSynced: () => void
 }
 
-const persistAll = (s: Pick<LibraryState, 'liked' | 'playlists' | 'events'>): void => {
+type Persisted = Pick<LibraryState, 'liked' | 'likedMeta' | 'playlists' | 'playlistTombs' | 'events'>
+
+const persistAll = (s: Persisted): void => {
   save('liked', s.liked)
+  save('likedMeta', s.likedMeta)
   save('playlists', s.playlists)
+  save('playlistTombs', s.playlistTombs)
   save('events', s.events)
 }
 
-export const useLibrary = create<LibraryState>((set, get) => ({
-  liked: load<Track[]>('liked', []),
-  playlists: load<Playlist[]>('playlists', []),
-  events: load<PlayEvent[]>('events', []),
+const liked0 = load<Track[]>('liked', [])
+// Data from before sync existed has no edit times: treat as edited "long ago" so any cloud edit wins.
+const likedMeta0 = load<LikeMeta>('likedMeta', {})
+for (const t of liked0) likedMeta0[refKey(t.ref)] ??= { at: 1, del: false }
+const playlists0 = load<Playlist[]>('playlists', []).map((p) => ({ ...p, updatedAt: p.updatedAt ?? p.createdAt }))
 
-  isLiked: (t) => get().liked.some((x) => refKey(x.ref) === refKey(t.ref)),
-
-  toggleLike: (t) => {
-    const k = refKey(t.ref)
-    const liked = get().liked.some((x) => refKey(x.ref) === k) ? get().liked.filter((x) => refKey(x.ref) !== k) : [t, ...get().liked]
-    set({ liked })
-    persistAll({ ...get(), liked })
-  },
-
-  createPlaylist: (name, tracks = []) => {
-    const p: Playlist = { id: uid(), name: name.trim() || 'New playlist', createdAt: Date.now(), tracks }
-    const playlists = [...get().playlists, p]
-    set({ playlists })
-    persistAll({ ...get(), playlists })
-    return p.id
-  },
-
-  renamePlaylist: (id, name) => {
-    const playlists = get().playlists.map((p) => (p.id === id ? { ...p, name: name.trim() || p.name } : p))
-    set({ playlists })
-    persistAll({ ...get(), playlists })
-  },
-
-  deletePlaylist: (id) => {
-    const playlists = get().playlists.filter((p) => p.id !== id)
-    set({ playlists })
-    persistAll({ ...get(), playlists })
-  },
-
-  addToPlaylist: (id, t) => {
-    const playlists = get().playlists.map((p) =>
-      p.id === id && !p.tracks.some((x) => refKey(x.ref) === refKey(t.ref)) ? { ...p, tracks: [...p.tracks, t] } : p
-    )
-    set({ playlists })
-    persistAll({ ...get(), playlists })
-  },
-
-  removeFromPlaylist: (id, index) => {
-    const playlists = get().playlists.map((p) => (p.id === id ? { ...p, tracks: p.tracks.filter((_, i) => i !== index) } : p))
-    set({ playlists })
-    persistAll({ ...get(), playlists })
-  },
-
-  moveInPlaylist: (id, from, to) => {
-    const playlists = get().playlists.map((p) => {
-      if (p.id !== id || to < 0 || to >= p.tracks.length) return p
-      const tracks = [...p.tracks]
-      const [moved] = tracks.splice(from, 1)
-      if (moved) tracks.splice(to, 0, moved)
-      return { ...p, tracks }
-    })
-    set({ playlists })
-    persistAll({ ...get(), playlists })
-  },
-
-  logPlay: (e) => {
-    const events = [...get().events, e].slice(-MAX_EVENTS)
-    set({ events })
-    persistAll({ ...get(), events })
-  },
-
-  /** Generate ~3 weeks of plausible taste-biased listening so stats and recs can be explored. */
-  seedDemoHistory: () => {
-    const catalog = useCatalog.getState().tracks
-    if (!catalog.length) return
-    const favs = new Set(['Nova Lumen', 'Selene & The Tides', 'Mika Ono'])
-    const pool = catalog.flatMap((t) => (favs.has(t.artists[0] ?? '') ? [t, t, t] : [t]))
-    const now = Date.now()
-    const evs: PlayEvent[] = []
-    for (let i = 0; i < 240; i++) {
-      const t = pool[Math.floor(Math.random() * pool.length)]!
-      const day = Math.floor(Math.random() * 21)
-      const hour = Math.random() < 0.6 ? 20 + Math.floor(Math.random() * 4) : 9 + Math.floor(Math.random() * 10)
-      const startedAt = now - day * 86_400_000 - (24 - hour) * 3_600_000 + Math.random() * 3_000_000
-      const skipped = Math.random() < (favs.has(t.artists[0] ?? '') ? 0.08 : 0.35)
-      const listenedMs = skipped ? 3000 + Math.random() * 12_000 : t.durationMs
-      evs.push({ track: t, startedAt, listenedMs, counted: !skipped, skipped })
-    }
-    evs.sort((a, b) => a.startedAt - b.startedAt)
-    const events = [...get().events, ...evs].slice(-MAX_EVENTS).sort((a, b) => a.startedAt - b.startedAt)
-    set({ events })
-    persistAll({ ...get(), events })
-  },
-
-  clearHistory: () => {
-    set({ events: [] })
-    persistAll({ ...get(), events: [] })
+export const useLibrary = create<LibraryState>((set, get) => {
+  const commit = (patch: Partial<Persisted>): void => {
+    set(patch)
+    const { liked, likedMeta, playlists, playlistTombs, events } = get()
+    persistAll({ liked, likedMeta, playlists, playlistTombs, events })
   }
-}))
+  const touch = (id: string, f: (p: Playlist) => Playlist): void =>
+    commit({ playlists: get().playlists.map((p) => (p.id === id ? { ...f(p), updatedAt: Date.now() } : p)) })
+
+  return {
+    liked: liked0,
+    likedMeta: likedMeta0,
+    playlists: playlists0,
+    playlistTombs: load<Record<string, number>>('playlistTombs', {}),
+    events: load<PlayEvent[]>('events', []),
+
+    isLiked: (t) => get().liked.some((x) => refKey(x.ref) === refKey(t.ref)),
+
+    toggleLike: (t) => {
+      const k = refKey(t.ref)
+      const was = get().liked.some((x) => refKey(x.ref) === k)
+      commit({
+        liked: was ? get().liked.filter((x) => refKey(x.ref) !== k) : [t, ...get().liked],
+        likedMeta: { ...get().likedMeta, [k]: { at: Date.now(), del: was } }
+      })
+    },
+
+    createPlaylist: (name, tracks = []) => {
+      const now = Date.now()
+      const p: Playlist = { id: uid(), name: name.trim() || 'New playlist', createdAt: now, updatedAt: now, tracks }
+      commit({ playlists: [...get().playlists, p] })
+      return p.id
+    },
+
+    renamePlaylist: (id, name) => touch(id, (p) => ({ ...p, name: name.trim() || p.name })),
+
+    deletePlaylist: (id) =>
+      commit({
+        playlists: get().playlists.filter((p) => p.id !== id),
+        playlistTombs: { ...get().playlistTombs, [id]: Date.now() }
+      }),
+
+    addToPlaylist: (id, t) =>
+      touch(id, (p) => (p.tracks.some((x) => refKey(x.ref) === refKey(t.ref)) ? p : { ...p, tracks: [...p.tracks, t] })),
+
+    removeFromPlaylist: (id, index) => touch(id, (p) => ({ ...p, tracks: p.tracks.filter((_, i) => i !== index) })),
+
+    moveInPlaylist: (id, from, to) =>
+      touch(id, (p) => {
+        if (to < 0 || to >= p.tracks.length) return p
+        const tracks = [...p.tracks]
+        const [moved] = tracks.splice(from, 1)
+        if (moved) tracks.splice(to, 0, moved)
+        return { ...p, tracks }
+      }),
+
+    logPlay: (e) => commit({ events: [...get().events, e].slice(-MAX_EVENTS) }),
+
+    /** Generate ~3 weeks of plausible taste-biased listening so stats and recs can be explored. */
+    seedDemoHistory: () => {
+      const catalog = useCatalog.getState().tracks
+      if (!catalog.length) return
+      const favs = new Set(['Nova Lumen', 'Selene & The Tides', 'Mika Ono'])
+      const pool = catalog.flatMap((t) => (favs.has(t.artists[0] ?? '') ? [t, t, t] : [t]))
+      const now = Date.now()
+      const evs: PlayEvent[] = []
+      for (let i = 0; i < 240; i++) {
+        const t = pool[Math.floor(Math.random() * pool.length)]!
+        const day = Math.floor(Math.random() * 21)
+        const hour = Math.random() < 0.6 ? 20 + Math.floor(Math.random() * 4) : 9 + Math.floor(Math.random() * 10)
+        const startedAt = Math.round(now - day * 86_400_000 - (24 - hour) * 3_600_000 + Math.random() * 3_000_000)
+        const skipped = Math.random() < (favs.has(t.artists[0] ?? '') ? 0.08 : 0.35)
+        const listenedMs = Math.round(skipped ? 3000 + Math.random() * 12_000 : t.durationMs)
+        evs.push({ track: t, startedAt, listenedMs, counted: !skipped, skipped })
+      }
+      const events = [...get().events, ...evs].slice(-MAX_EVENTS).sort((a, b) => a.startedAt - b.startedAt)
+      commit({ events })
+    },
+
+    clearHistory: () => commit({ events: [] }),
+
+    snapshotLikes: () =>
+      get().liked.map((t) => ({ key: refKey(t.ref), at: get().likedMeta[refKey(t.ref)]?.at ?? 1, deleted: false, value: t })).concat(
+        Object.entries(get().likedMeta)
+          .filter(([, m]) => m.del)
+          .map(([key, m]) => ({ key, at: m.at, deleted: true, value: get().liked.find((t) => refKey(t.ref) === key) ?? (null as unknown as Track) }))
+      ),
+
+    snapshotPlaylists: () =>
+      get()
+        .playlists.map((p) => ({ key: p.id, at: p.updatedAt ?? p.createdAt, deleted: false, value: p }))
+        .concat(
+          Object.entries(get().playlistTombs).map(([key, at]) => ({ key, at, deleted: true, value: null as unknown as Playlist }))
+        ),
+
+    applyRemote: ({ likes, playlists, events }) => {
+      const patch: Partial<Persisted> = {}
+      if (likes?.length) {
+        const meta = { ...get().likedMeta }
+        const map = new Map(get().liked.map((t) => [refKey(t.ref), t]))
+        for (const v of likes) {
+          meta[v.key] = { at: v.at, del: v.deleted }
+          if (v.deleted) map.delete(v.key)
+          else map.set(v.key, v.value)
+        }
+        // newest like first, matching toggleLike's prepend behaviour
+        patch.liked = [...map.values()].sort((a, b) => (meta[refKey(b.ref)]?.at ?? 0) - (meta[refKey(a.ref)]?.at ?? 0))
+        patch.likedMeta = meta
+      }
+      if (playlists?.length) {
+        const byId = new Map(get().playlists.map((p) => [p.id, p]))
+        const tombs = { ...get().playlistTombs }
+        for (const v of playlists) {
+          if (v.deleted) {
+            byId.delete(v.key)
+            tombs[v.key] = v.at
+          } else {
+            byId.set(v.key, { ...v.value, updatedAt: v.at })
+            delete tombs[v.key]
+          }
+        }
+        patch.playlists = [...byId.values()].sort((a, b) => a.createdAt - b.createdAt)
+        patch.playlistTombs = tombs
+      }
+      if (events?.length) {
+        const known = new Set(get().events.map(eventId))
+        const merged = [...get().events, ...events.filter((e) => !known.has(eventId(e)))].sort((a, b) => a.startedAt - b.startedAt)
+        patch.events = merged.slice(-MAX_EVENTS)
+      }
+      if (Object.keys(patch).length) commit(patch)
+    },
+
+    /** Used when a different account signs in on this device: the previous account's data lives in the cloud already. */
+    wipeSynced: () => commit({ liked: [], likedMeta: {}, playlists: [], playlistTombs: {}, events: [] })
+  }
+})

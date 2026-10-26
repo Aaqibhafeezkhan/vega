@@ -17,6 +17,9 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, 'src/renderer'),
+    // .env lives at the repo root; only VITE_* variables reach the client bundle
+    envDir: __dirname,
+    envPrefix: 'VITE_',
     resolve: { alias: { '@shared': shared, '@providers': providers, '@': resolve(__dirname, 'src/renderer/src') } },
     plugins: [react()],
     build: { rollupOptions: { input: resolve(__dirname, 'src/renderer/index.html') } }

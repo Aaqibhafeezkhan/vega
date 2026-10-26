@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useCatalog } from './store/catalog'
+import './store/auth' // starts session restore and background sync
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
 import { Sidebar } from './components/Sidebar'
@@ -9,6 +10,7 @@ import { Home } from './views/Home'
 import { Library } from './views/Library'
 import { PlaylistView } from './views/PlaylistView'
 import { Search } from './views/Search'
+import { Account } from './views/Account'
 import { Sources } from './views/Sources'
 import { Stats } from './views/Stats'
 
@@ -43,6 +45,7 @@ export function App() {
         {view.name === 'library' && <Library />}
         {view.name === 'stats' && <Stats />}
         {view.name === 'sources' && <Sources />}
+        {view.name === 'account' && <Account />}
         {view.name === 'playlist' && <PlaylistView id={view.id} />}
       </main>
       {queueOpen && <QueuePanel />}
