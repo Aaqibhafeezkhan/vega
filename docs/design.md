@@ -215,6 +215,26 @@ hostable on any static host (GitHub Pages once the repo is public). Platform dif
 Consequence: web users with no local files get the online sources; yt-dlp/Piped-style providers are desktop-only.
 Firefox/Safari lack directory access, so Sources shows a notice and only online sources work there.
 
+## 12.2 Accounts and cloud (planned M4)
+
+Goal: the web app behaves like a real service: sign up, log in, library/playlists/history follow the user across devices.
+Local-first stays: the app works signed-out (data in SQLite/IndexedDB); signing in adds sync.
+
+Choice: **Supabase** over Firebase. Postgres fits the relational model (playlists, play_events, rollups for analytics and
+recs), Row Level Security gives per-user isolation without a custom server, auth (email, Google/GitHub OAuth) is built in,
+free tier is enough for personal/small use, and the schema can move to any Postgres later (no lock-in). Firebase would force
+a document model and weak aggregation for analytics.
+
+- Tables mirror the local ones: `profiles`, `liked_tracks`, `playlists`, `playlist_items`, `play_events`, `settings`; every row has `user_id` + RLS `user_id = auth.uid()`.
+- Sync: append-only `play_events` (idempotent by client uuid); likes/playlists last-write-wins with `updated_at` + tombstones.
+- Tracks are stored as `TrackRef` + metadata snapshot, never stream URLs. Local-file refs sync metadata only (the file stays on the device).
+- Hosting: static web build on Cloudflare Pages / Netlify / GitHub Pages (free); Supabase free project for auth + DB.
+- Needs from the owner: a Supabase project (URL + anon key; the anon key is public by design, secured by RLS).
+
+Honest limit of "like Spotify": the web app can offer the player, library, playlists, accounts and recommendations, but its catalog
+is whatever sources allow browser access (Audius, Jamendo, user's own files). A Spotify-sized catalog needs YouTube-class
+sources that browsers cannot call (CORS) and that carry ToS risk when run as a public hosted service; those stay desktop/self-hosted.
+
 ## 13. Repo layout
 
 ```
@@ -233,7 +253,8 @@ docs/          design, ADRs, provider notes
 |---|---|---|
 | **M1 (done)** | Electron+React shell, design system, Home/Search/Library/Playlists/Stats views, player bar + queue, playback engine, **mock provider**, persisted JSON/localStorage repo, play-event log & stats | `npm run dev` opens app; search fake catalog, play (synth audio), queue, build playlists, stats update |
 | **M2 (done)** | SQLite (desktop) / IndexedDB (web), incremental folder scanner + tags + cover art, local provider, `vega-media://` protocol, web build | Point at music folder; library persists and plays on both platforms |
-| M3 | Audius + Jamendo + Archive providers, proxy/cache, fallback chain | Search returns online results; plays with no key |
+| **M3 (done)** | Audius (no key) + Jamendo (free client id) providers, source chips, stream-error skip | Search/browse returns online results; plays with no key. Internet Archive + desktop stream proxy/cache deferred |
+| M4 | Accounts + cloud sync (Supabase): auth, Postgres with RLS, sync of likes/playlists/history, PWA | Sign in on web, library follows you across devices |
 | M4 | MusicBrainz/Last.fm/Cover Art enrichment, recs v1, smart playlists | Daily Mix & Discover from real history |
 | M5 | Lyra integration: synced lyrics, karaoke, fullscreen UI | Lyrics follow Vega playback |
 | M6 | yt-dlp / Piped optional providers, radio, EQ, installer, public repo | Installable build |

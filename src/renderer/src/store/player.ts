@@ -100,6 +100,14 @@ export const usePlayer = create<PlayerState>((set, get) => {
   audio.addEventListener('durationchange', () => {
     if (Number.isFinite(audio.duration)) set({ durationMs: audio.duration * 1000 })
   })
+  audio.addEventListener('error', () => {
+    // stream died after resolve (expired url, offline, bad file): report and move on
+    const track = get().queue[get().index]
+    if (!track || !audio.src) return
+    const token = loadToken
+    set({ loading: false, playing: false, error: `Can't play "${track.title}"` })
+    if (get().queue.length > 1) setTimeout(() => token === loadToken && get().next(true), 1200)
+  })
   audio.addEventListener('ended', () => {
     finishSession(false)
     get().next(true)

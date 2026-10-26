@@ -1,6 +1,8 @@
 import { SourceRegistry } from '@shared/registry'
 import { createMockProvider } from '@providers/mock'
 import { createLocalProvider } from '@providers/local'
+import { createAudiusProvider } from '@providers/audius'
+import { createJamendoProvider } from '@providers/jamendo'
 import { backend } from './backend'
 
 /**
@@ -19,4 +21,12 @@ const mock = createMockProvider()
 export function setDemoEnabled(on: boolean): void {
   if (on) sources.register(mock, 100)
   else sources.unregister(mock.id)
+}
+
+/** Registers/unregisters online providers to match settings. Jamendo only exists once the user supplies a client id. */
+export function applyOnlineSources(cfg: { audius: boolean; jamendoClientId: string }): void {
+  if (cfg.audius) sources.register(createAudiusProvider(), 50)
+  else sources.unregister('audius')
+  if (cfg.jamendoClientId) sources.register(createJamendoProvider({ clientId: cfg.jamendoClientId }), 60)
+  else sources.unregister('jamendo')
 }

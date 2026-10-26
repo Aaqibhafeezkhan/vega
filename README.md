@@ -6,11 +6,13 @@ and synced lyrics get merged in later. Vega is the brightest star in the constel
 
 Stack: Electron + React + TypeScript + Zustand (same as Lyra).
 
-## Status: milestone 2 (local library on desktop and web)
+## Status: milestone 3 (local library + Audius + Jamendo, desktop and web)
 
 Add a music folder under **Sources**: it is scanned (tags, duration, cover art) into SQLite on desktop or IndexedDB in the browser, searchable instantly, and played from disk. A built-in **demo provider** (fictional catalog) stays available. Online sources plug in behind the
 `SourceProvider` interface later: local files, Audius, Jamendo, Internet Archive, yt-dlp. See
 [docs/design.md](docs/design.md) for architecture, provider research and roadmap.
+
+Online: Audius works out of the box (no key). Jamendo needs a free client ID, paste it under Sources.
 
 Works today: search, play/queue/shuffle/repeat, likes, playlists (create, rename, reorder, delete), listening
 insights (top artists/genres/tracks, clock, streak), recommendations (Made for you, Discover), persisted in localStorage.

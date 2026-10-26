@@ -6,6 +6,8 @@ import { usePlayer } from '@/store/player'
 import { Cover } from './Cover'
 import { Icon } from './Icon'
 
+const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo' }
+
 interface Props {
   track: Track
   index?: number
@@ -36,7 +38,10 @@ export function TrackRow({ track, index, onPlay, extra }: Props) {
       <Cover track={track} size={40} radius={6} />
       <div className="row-main">
         <div className="row-title">{track.title}</div>
-        <div className="row-sub">{track.artists.join(', ')}</div>
+        <div className="row-sub">
+          {track.artists.join(', ')}
+          {SOURCE_LABEL[track.ref.source] && <span className="src">{SOURCE_LABEL[track.ref.source]}</span>}
+        </div>
       </div>
       <div className="row-album">{track.album}</div>
       <button className={`icon-btn like${liked ? ' on' : ''}`} onClick={() => toggleLike(track)} aria-label={liked ? 'Unlike' : 'Like'}>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FolderInfo, ScanProgress } from '@shared/library'
 import { backend } from '@/lib/backend'
 import { useCatalog } from '@/store/catalog'
+import { useOnline } from '@/store/online'
 
 function ago(ts: number | null): string {
   if (!ts) return 'never scanned'
@@ -13,6 +14,8 @@ export function Sources() {
   const [folders, setFolders] = useState<FolderInfo[]>([])
   const [progress, setProgress] = useState<Record<string, ScanProgress>>({})
   const { demo, setDemo, localCount, refresh } = useCatalog()
+  const online = useOnline()
+  const [keyDraft, setKeyDraft] = useState(online.jamendoClientId)
 
   const reload = useCallback(async () => {
     setFolders(await backend.folders())
@@ -27,13 +30,51 @@ export function Sources() {
     })
   }, [reload])
 
+  const onlineSection = (
+    <>
+      <h2 className="section">Online sources</h2>
+      <div className="panel toggle-row">
+        <div>
+          <div className="row-title">Audius</div>
+          <div className="row-sub">Independent artists, millions of tracks. No account or key needed.</div>
+        </div>
+        <label className="switch">
+          <input type="checkbox" checked={online.audius} onChange={(e) => online.setAudius(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="panel toggle-row">
+        <div className="grow">
+          <div className="row-title">Jamendo</div>
+          <div className="row-sub">
+            Creative-Commons music. Needs a free client ID from{' '}
+            <a href="https://devportal.jamendo.com" target="_blank" rel="noreferrer">
+              devportal.jamendo.com
+            </a>
+            .
+          </div>
+        </div>
+        <input
+          className="key-input"
+          placeholder="Client ID"
+          value={keyDraft}
+          spellCheck={false}
+          onChange={(e) => setKeyDraft(e.target.value)}
+          onBlur={() => online.setJamendoClientId(keyDraft)}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        />
+      </div>
+    </>
+  )
+
   if (!backend.supported) {
     return (
       <div className="view">
         <h1>Sources</h1>
         <div className="banner">
-          This browser cannot open local folders. Use Chrome, Edge or the Vega desktop app to add your music. Online sources work everywhere.
+          This browser cannot open local folders. Use Chrome, Edge or the Vega desktop app to add your own music. Online sources work everywhere.
         </div>
+        {onlineSection}
       </div>
     )
   }
@@ -113,6 +154,8 @@ export function Sources() {
           )
         })}
       </div>
+
+      {onlineSection}
 
       <div className="panel toggle-row">
         <div>

@@ -23,7 +23,7 @@ export function PlayerBar() {
             <Cover track={track} size={56} radius={8} />
             <div className="pb-meta">
               <div className="row-title">{track.title}</div>
-              <div className="row-sub">{p.error ?? track.artists.join(', ')}</div>
+              <div className="row-sub">{p.error ?? (p.loading ? 'Loading…' : track.artists.join(', '))}</div>
             </div>
             <button className={`icon-btn like${liked ? ' on' : ''}`} onClick={() => toggleLike(track)} aria-label="Like">
               <Icon name={liked ? 'heart-fill' : 'heart'} size={18} />

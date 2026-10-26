@@ -5,6 +5,7 @@ import { refKey, type Track } from '@shared/types'
 import { Shelf } from '@/components/Shelf'
 import { sources } from '@/lib/sources'
 import { useCatalog } from '@/store/catalog'
+import { useOnline } from '@/store/online'
 import { useLibrary } from '@/store/library'
 
 function greeting(): string {
@@ -16,6 +17,8 @@ export function Home() {
   const events = useLibrary((s) => s.events)
   const seed = useLibrary((s) => s.seedDemoHistory)
   const catalog = useCatalog((s) => s.tracks)
+  const online = useOnline((s) => `${s.audius}|${s.jamendoClientId}`)
+  const demo = useCatalog((s) => s.demo)
   const [shelves, setShelves] = useState<ShelfData[]>([])
 
   useEffect(() => {
@@ -24,7 +27,7 @@ export function Home() {
     return () => {
       live = false
     }
-  }, [])
+  }, [online, demo])
 
   const { recent, mix, discover } = useMemo(() => {
     const profile = buildProfile(events)
