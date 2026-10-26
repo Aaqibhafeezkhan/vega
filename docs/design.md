@@ -244,6 +244,14 @@ through `window.__vegaHost` (`src/renderer/src/lib/lyraHost.ts`), lyrics/backgro
 global CSS and behaviour untouched. The packaged desktop UI is served from a `vega-app://` origin so parent and iframe can talk.
 To update Lyra, re-copy its `src/renderer`, `src/core`, `src/shared` into `lyra/` (host/ is Vega's own).
 
+## 12.4 UI design system ("Starlight")
+
+Tokens in `styles/tokens.css`; the whole app is coloured from the playing track's artwork (palette extraction ported from Lyra,
+`lib/artTheme.ts`) through animated CSS custom properties (`--accent`, `--tint1`, `--tint2`), so the ambient background, dock,
+buttons and glow all follow the music. Layout: glass rail / stage / queue drawer with a floating dock. Inter Variable, tight
+display type, 1.75px stroke icon set authored for the app, spring-like easing, reduced-motion respected. Command palette
+(Ctrl+K), history navigation, `/` to search, toasts for actions, skeleton loading and illustrated empty states.
+
 ## 13. Repo layout
 
 ```
@@ -266,7 +274,7 @@ docs/          design, ADRs, provider notes
 | **M4 (done)** | Accounts + cloud sync (Supabase): email auth, Postgres with RLS, sync of likes/playlists/history (see docs/supabase-setup.md) | Sign in on web or desktop, library follows you across devices |
 | **M5 (done)** | Metadata + recommendations v2: MusicBrainz artist genres (cached, 1 req/s), Last.fm similar artists (optional key), session co-listening, radio from any track, smart playlists (synced), search ranking. Cover Art Archive enrichment deferred | Daily Mix and Discover use real tags; smart playlists update live |
 | **M6 (done)** | Lyra's real player UI inside Vega (vendored in `lyra/`): backdrop and video backgrounds, synced and word-by-word lyrics, karaoke, themes/settings, wrong-lyrics picker, per-song offset. Runs in a same-origin iframe against a Vega-backed `window.lyra` bridge (same pattern as Lyra's Android build) | Lyra's player follows Vega's playback and controls it. Not ported: Spotify, window modes/widgets, studio video export, jam/nearby |
-| M7 | Optional power providers (yt-dlp, Piped fallback), radio (radio-browser), EQ, desktop installer | Installable build |
+| **M7 (done)** | Live radio (radio-browser), 10-band equalizer (desktop), opt-in YouTube sources (yt-dlp with verified install, Piped with failover; desktop), Windows installer (electron-builder, NSIS) + release workflow, premium UI redesign (Starlight design system, adaptive colour, command palette) | `npm run dist` builds `release/Vega-Setup-<version>.exe`; pushing a `v*` tag publishes it via GitHub Actions |
 | M8 | Android shell | Parity |
 
 ## 15. Risks & revisit list

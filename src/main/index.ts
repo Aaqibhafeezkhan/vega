@@ -17,6 +17,7 @@ function createWindow(): void {
     backgroundColor: '#0b0b10',
     autoHideMenuBar: true,
     title: 'Vega',
+    icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

@@ -8,7 +8,7 @@ Live web version: https://vega-psi-lac.vercel.app
 
 Stack: Electron + React + TypeScript + Zustand (same as Lyra).
 
-## Status: milestone 6 (synced lyrics and fullscreen player on top of M1-M5)
+## Status: milestone 7 (roadmap M1-M7 complete; Android is M8)
 
 Add a music folder under **Sources**: it is scanned (tags, duration, cover art) into SQLite on desktop or IndexedDB in the browser, searchable instantly, and played from disk. A built-in **demo provider** (fictional catalog) stays available. Online sources plug in behind the
 `SourceProvider` interface later: local files, Audius, Jamendo, Internet Archive, yt-dlp. See
@@ -22,6 +22,8 @@ Recommendations: genres learned from MusicBrainz, optional Last.fm similar artis
 
 Lyra player: the lyrics button opens Lyra's own fullscreen player (backdrop and video backgrounds, synced word-by-word lyrics, karaoke, themes) driven by Vega's playback.
 
+Also: live radio, a 10-band equalizer (desktop), opt-in YouTube sources via your own yt-dlp or Piped (desktop), command palette (Ctrl+K).
+
 Works today: search, play/queue/shuffle/repeat, likes, playlists (create, rename, reorder, delete), listening
 insights (top artists/genres/tracks, clock, streak), recommendations (Made for you, Discover), persisted locally (SQLite / IndexedDB) and synced when signed in.
 
@@ -32,6 +34,7 @@ npm install
 npm run dev        # Electron app
 npm run dev:web    # web version, in a browser at http://localhost:5174 (Chrome/Edge for local folders)
 npm run build:web  # static site in dist-web/
+npm run dist       # Windows installer in release/ (needs a normal network; electron-builder downloads tooling)
 npm test
 npm run typecheck
 ```
