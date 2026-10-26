@@ -4,6 +4,8 @@ Standalone personal music app: search, library, playlists, listening analytics a
 Built to replace Spotify as the music source for [Lyra](https://github.com/DhruvHarani1/lyra); Lyra's player UI
 and synced lyrics get merged in later. Vega is the brightest star in the constellation Lyra.
 
+Live web version: https://vega-psi-lac.vercel.app
+
 Stack: Electron + React + TypeScript + Zustand (same as Lyra).
 
 ## Status: milestone 4 (accounts and cloud sync on top of M1-M3)
