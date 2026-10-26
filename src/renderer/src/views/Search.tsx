@@ -1,18 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Track } from '@shared/types'
 import { TrackList } from '@/components/TrackList'
+import { buildProfile, rankSearch } from '@shared/recs'
+import { refKey } from '@shared/types'
 import { sources } from '@/lib/sources'
+import { useLibrary } from '@/store/library'
+import { useMeta } from '@/store/meta'
 import { useUi } from '@/store/ui'
 
 export function Search() {
   const query = useUi((s) => s.query)
   const setQuery = useUi((s) => s.setQuery)
-  const [results, setResults] = useState<Track[]>([])
+  const [raw, setRaw] = useState<Track[]>([])
+  const events = useLibrary((s) => s.events)
+  const liked = useLibrary((s) => s.liked)
+  const results = useMemo(
+    () => rankSearch(raw, buildProfile(events), new Set(liked.map((t) => refKey(t.ref))), query),
+    [raw, events, liked, query]
+  )
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults([])
+      setRaw([])
       setBusy(false)
       return
     }
@@ -20,10 +30,11 @@ export function Search() {
     setBusy(true)
     const timer = setTimeout(() => {
       sources
-        .search(query, { signal: ctl.signal, onPartial: (t) => !ctl.signal.aborted && setResults(t) })
+        .search(query, { signal: ctl.signal, onPartial: (t) => !ctl.signal.aborted && setRaw(t) })
         .then((t) => {
           if (ctl.signal.aborted) return
-          setResults(t)
+          setRaw(t)
+          useMeta.getState().request(t)
           setBusy(false)
         })
         .catch(() => !ctl.signal.aborted && setBusy(false))

@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { buildProfile, recommend } from '@shared/recs'
+import { buildCoListening, buildProfile, coListeningScores, recommend } from '@shared/recs'
 import type { Shelf as ShelfData } from '@shared/provider'
-import { refKey, type Track } from '@shared/types'
+import { refKey } from '@shared/types'
 import { Shelf } from '@/components/Shelf'
+import { buildUniverse, recentTracks } from '@/lib/recommender'
 import { sources } from '@/lib/sources'
 import { useCatalog } from '@/store/catalog'
-import { useOnline } from '@/store/online'
 import { useLibrary } from '@/store/library'
+import { useMeta } from '@/store/meta'
+import { useOnline } from '@/store/online'
 
 function greeting(): string {
   const h = new Date().getHours()
@@ -15,11 +17,17 @@ function greeting(): string {
 
 export function Home() {
   const events = useLibrary((s) => s.events)
+  const liked = useLibrary((s) => s.liked)
   const seed = useLibrary((s) => s.seedDemoHistory)
   const catalog = useCatalog((s) => s.tracks)
   const online = useOnline((s) => `${s.audius}|${s.archive}|${s.jamendoClientId}`)
   const demo = useCatalog((s) => s.demo)
+  const artistGenres = useMeta((s) => s.artistGenres)
+  const genresFor = useMeta((s) => s.genresFor)
+  const similarTo = useMeta((s) => s.similarTo)
+  const lastfm = useMeta((s) => s.lastfmKey)
   const [shelves, setShelves] = useState<ShelfData[]>([])
+  const [similar, setSimilar] = useState<{ seed: string; artists: Set<string> } | null>(null)
 
   useEffect(() => {
     let live = true
@@ -29,24 +37,38 @@ export function Home() {
     }
   }, [online, demo])
 
-  const { recent, mix, discover } = useMemo(() => {
-    const profile = buildProfile(events)
-    const seen = new Set<string>()
-    const recent: Track[] = []
-    for (const e of [...events].reverse()) {
-      const k = refKey(e.track.ref)
-      if (!seen.has(k) && e.counted) {
-        seen.add(k)
-        recent.push(e.track)
-      }
-      if (recent.length >= 10) break
+  const recent = useMemo(() => recentTracks(events, 10), [events])
+
+  // Last.fm: artists similar to your most-played recent artist (only with a key)
+  const topArtist = recent[0]?.artists[0]
+  useEffect(() => {
+    let live = true
+    if (!topArtist || !lastfm) {
+      setSimilar(null)
+      return
     }
+    void similarTo(topArtist).then((a) => live && setSimilar({ seed: topArtist, artists: new Set(a) }))
+    return () => {
+      live = false
+    }
+  }, [topArtist, lastfm, similarTo])
+
+  const { mix, discover, because } = useMemo(() => {
+    const universe = buildUniverse()
+    const profile = buildProfile(events, Date.now(), genresFor)
+    const seenRecent = new Set(recent.map((t) => refKey(t.ref)))
+    const boost = coListeningScores(buildCoListening(events), recent.slice(0, 5).map((t) => refKey(t.ref)))
+    const similarArtists = similar?.artists
     return {
-      recent,
-      mix: recommend(catalog, profile, { limit: 12 }),
-      discover: recommend(catalog, profile, { limit: 12, maxFamiliarity: 0.3, exclude: seen })
+      mix: recommend(universe, profile, { limit: 12, genresOf: genresFor, boost, similarArtists }),
+      discover: recommend(universe, profile, { limit: 12, maxFamiliarity: 0.3, exclude: seenRecent, genresOf: genresFor, boost, similarArtists }),
+      because: recent[0]
+        ? recommend(universe, profile, { limit: 10, exclude: new Set([refKey(recent[0].ref)]), genresOf: genresFor, boost: coListeningScores(buildCoListening(events), [refKey(recent[0].ref)]), similarArtists })
+        : []
     }
-  }, [events, catalog])
+    // artistGenres/liked/catalog change what the universe and genre lookups return
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, recent, catalog, liked, artistGenres, genresFor, similar])
 
   return (
     <div className="view">
@@ -62,7 +84,8 @@ export function Home() {
         </div>
       )}
       <Shelf title="Jump back in" tracks={recent} />
-      <Shelf title="Made for you" subtitle={events.length ? 'Based on what you play and skip' : 'Your daily mix starts generic and sharpens as you listen'} tracks={mix} />
+      <Shelf title="Made for you" subtitle={events.length ? 'Based on what you play, skip and listen to together' : 'Your daily mix starts generic and sharpens as you listen'} tracks={mix} />
+      {recent[0] && <Shelf title={`Because you played ${recent[0].title}`} tracks={because} />}
       <Shelf title="Discover" subtitle="Tracks you have not heard, close to your taste" tracks={discover} />
       {shelves.map((s) => (
         <Shelf key={s.id} title={s.title} tracks={s.tracks} />

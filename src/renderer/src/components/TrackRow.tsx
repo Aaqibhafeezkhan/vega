@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { refKey, type Track } from '@shared/types'
 import { fmtTime } from '@/lib/format'
+import { radioFrom } from '@/lib/recommender'
 import { useLibrary } from '@/store/library'
 import { usePlayer } from '@/store/player'
 import { Cover } from './Cover'
@@ -80,6 +81,7 @@ function TrackMenu({ track, extra, close }: { track: Track; extra?: Props['extra
       <div className="menu">
         {item('Play next', () => playNext(track))}
         {item('Add to queue', () => enqueue(track))}
+        {item('Start radio', () => void radioFrom(track).then((t) => usePlayer.getState().playTracks(t)))}
         <div className="menu-sep">Add to playlist</div>
         {playlists.map((p) => item(p.name, () => addToPlaylist(p.id, track)))}
         {item('+ New playlist', () => createPlaylist(track.title, [track]))}

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PlayEvent, Playlist, Track } from '@shared/types'
+import type { SmartPlaylist } from '@shared/smart'
 import { eventId, mergeEvents, reconcile, type Versioned } from '@shared/sync'
 import { load, save } from './persist'
 import { useLibrary } from '@/store/library'
@@ -21,6 +22,11 @@ interface PlaylistRow {
   created_at: number
   updated_at: number
   deleted: boolean
+}
+interface SettingRow {
+  key: string
+  value: { deleted?: boolean; playlist?: SmartPlaylist }
+  updated_at: number
 }
 interface EventRow {
   id: string
@@ -73,6 +79,13 @@ export async function syncOnce(sb: SupabaseClient, userId: string): Promise<{ pu
   )
   const pls = reconcile(lib.snapshotPlaylists(), remotePlV)
 
+  // ---- smart playlists (stored as user_settings rows keyed "smart:<id>") ----
+  const remoteSmartRows = await pageAll<SettingRow>((a, b) => sb.from('user_settings').select('key, value, updated_at').like('key', 'smart:%').range(a, b))
+  const remoteSmart = remoteSmartRows.map(
+    (r): Versioned<SmartPlaylist> => ({ key: r.key.slice(6), at: r.updated_at, deleted: !!r.value.deleted, value: r.value.playlist as SmartPlaylist })
+  )
+  const smart = reconcile(lib.snapshotSmart(), remoteSmart)
+
   // ---- events: pull what arrived since the last pull, push what is newer than the last push ----
   const cursorKey = `sync.${userId}.eventCursor`
   const pushedKey = `sync.${userId}.pushedUntil`
@@ -92,7 +105,7 @@ export async function syncOnce(sb: SupabaseClient, userId: string): Promise<{ pu
   const ev = mergeEvents(localNew, remoteEvents)
 
   // ---- apply remote -> local ----
-  lib.applyRemote({ likes: likes.toLocal, playlists: pls.toLocal, events: ev.toLocal })
+  lib.applyRemote({ likes: likes.toLocal, playlists: pls.toLocal, smart: smart.toLocal, events: ev.toLocal })
 
   // ---- push local -> remote ----
   for (const part of chunk(likes.toRemote, BATCH)) {
@@ -120,6 +133,14 @@ export async function syncOnce(sb: SupabaseClient, userId: string): Promise<{ pu
       )
     )
   }
+  for (const part of chunk(smart.toRemote, BATCH)) {
+    must(
+      await sb.from('user_settings').upsert(
+        part.map((v) => ({ user_id: userId, key: `smart:${v.key}`, value: v.deleted ? { deleted: true } : { playlist: v.value }, updated_at: v.at })),
+        { onConflict: 'user_id,key' }
+      )
+    )
+  }
   for (const part of chunk(ev.toRemote, BATCH)) {
     must(
       await sb.from('play_events').upsert(
@@ -142,7 +163,7 @@ export async function syncOnce(sb: SupabaseClient, userId: string): Promise<{ pu
   const maxLocal = useLibrary.getState().events.reduce((m, e) => Math.max(m, e.startedAt), pushedUntil)
   save(pushedKey, maxLocal)
   return {
-    pulled: likes.toLocal.length + pls.toLocal.length + ev.toLocal.length,
-    pushed: likes.toRemote.length + pls.toRemote.length + ev.toRemote.length
+    pulled: likes.toLocal.length + pls.toLocal.length + smart.toLocal.length + ev.toLocal.length,
+    pushed: likes.toRemote.length + pls.toRemote.length + smart.toRemote.length + ev.toRemote.length
   }
 }

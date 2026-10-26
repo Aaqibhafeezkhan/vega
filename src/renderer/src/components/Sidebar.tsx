@@ -16,6 +16,7 @@ export function Sidebar() {
   const view = useUi((s) => s.view)
   const go = useUi((s) => s.go)
   const playlists = useLibrary((s) => s.playlists)
+  const smart = useLibrary((s) => s.smart)
   const createPlaylist = useLibrary((s) => s.createPlaylist)
   const auth = useAuth()
   const [naming, setNaming] = useState(false)
@@ -43,9 +44,14 @@ export function Sidebar() {
       </nav>
       <div className="side-head">
         <span>Playlists</span>
-        <button className="icon-btn" onClick={() => setNaming(true)} aria-label="New playlist">
-          <Icon name="plus" size={18} />
-        </button>
+        <span className="side-actions">
+          <button className="icon-btn" onClick={() => go({ name: 'smart', id: 'new' })} aria-label="New smart playlist" title="New smart playlist">
+            <Icon name="star" size={16} />
+          </button>
+          <button className="icon-btn" onClick={() => setNaming(true)} aria-label="New playlist" title="New playlist">
+            <Icon name="plus" size={18} />
+          </button>
+        </span>
       </div>
       {naming && (
         <input
@@ -75,7 +81,13 @@ export function Sidebar() {
             <span className="count">{p.tracks.length}</span>
           </button>
         ))}
-        {!playlists.length && !naming && <div className="muted small">No playlists yet</div>}
+        {smart.map((p) => (
+          <button key={p.id} className={`nav-item sub${view.name === 'smart' && view.id === p.id ? ' on' : ''}`} onClick={() => go({ name: 'smart', id: p.id })}>
+            <span className="smart-mark">✦</span>
+            {p.name}
+          </button>
+        ))}
+        {!playlists.length && !smart.length && !naming && <div className="muted small">No playlists yet</div>}
       </div>
       <button className={`account-chip${view.name === 'account' ? ' on' : ''}`} onClick={() => go({ name: 'account' })}>
         <span className={`avatar sync-${auth.user ? auth.sync : 'off'}`}>{auth.user?.email?.charAt(0).toUpperCase() ?? '?'}</span>

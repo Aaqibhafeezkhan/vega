@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FolderInfo, ScanProgress } from '@shared/library'
 import { backend } from '@/lib/backend'
 import { useCatalog } from '@/store/catalog'
+import { useMeta } from '@/store/meta'
 import { useOnline } from '@/store/online'
 
 function ago(ts: number | null): string {
@@ -57,6 +58,8 @@ export function Sources() {
   const { demo, setDemo, localCount, refresh } = useCatalog()
   const online = useOnline()
   const [keyDraft, setKeyDraft] = useState(online.jamendoClientId)
+  const meta = useMeta()
+  const [lfDraft, setLfDraft] = useState(meta.lastfmKey)
 
   const reload = useCallback(async () => {
     setFolders(await backend.folders())
@@ -207,6 +210,41 @@ export function Sources() {
       </div>
 
       {onlineSection}
+      <h2 className="section">Smarter recommendations</h2>
+      <div className="panel toggle-row">
+        <div>
+          <div className="row-title">Learn genres (MusicBrainz)</div>
+          <div className="row-sub">
+            Looks up artist genres so songs without tags still get recommended and can fill smart playlists. Free, no key.
+            {meta.pending > 0 && <span> Working through {meta.pending} artists…</span>}
+          </div>
+        </div>
+        <label className="switch">
+          <input type="checkbox" checked={meta.enrich} onChange={(e) => meta.setEnrich(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="panel toggle-row">
+        <div className="grow">
+          <div className="row-title">Similar artists (Last.fm)</div>
+          <div className="row-sub">
+            Optional. Adds "similar to what you play" to recommendations and radio. Free API key from{' '}
+            <a href="https://www.last.fm/api/account/create" target="_blank" rel="noreferrer">
+              last.fm/api
+            </a>
+            .
+          </div>
+        </div>
+        <input
+          className="key-input"
+          placeholder="API key"
+          value={lfDraft}
+          spellCheck={false}
+          onChange={(e) => setLfDraft(e.target.value)}
+          onBlur={() => meta.setLastfmKey(lfDraft)}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        />
+      </div>
       <CachePanel />
 
       <div className="panel toggle-row">

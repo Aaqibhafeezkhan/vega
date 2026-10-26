@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { createAudiusProvider } from './audius'
 import { createJamendoProvider } from './jamendo'
 import { createArchiveProvider } from './archive'
+import { createMusicBrainz } from './metadata/musicbrainz'
+import { createLastFm } from './metadata/lastfm'
 
 const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
@@ -115,5 +117,45 @@ describe('internet archive provider', () => {
   it('resolves to an encoded download url', async () => {
     const p = createArchiveProvider({ fetchImpl: (async () => json({})) as unknown as typeof fetch })
     expect(await p.resolve('item1/dir/My Song.mp3')).toMatchObject({ url: 'https://archive.org/download/item1/dir/My%20Song.mp3' })
+  })
+})
+
+describe('metadata providers', () => {
+  it('musicbrainz picks exact high-score artist, drops noise tags, rate limits', async () => {
+    const calls: number[] = []
+    const f = async (): Promise<Response> => {
+      calls.push(Date.now())
+      return json({
+        artists: [
+          { name: 'Other', score: 100, tags: [{ name: 'rock', count: 9 }] },
+          { name: 'M83', score: 100, tags: [{ name: 'seen live', count: 20 }, { name: 'electronic', count: 8 }, { name: 'shoegaze', count: 5 }, { name: 'french', count: 1 }, { name: 'synth pop', count: 3 }] }
+        ]
+      })
+    }
+    const mb = createMusicBrainz({ fetchImpl: f as unknown as typeof fetch, minIntervalMs: 60 })
+    const [a, b] = await Promise.all([mb.artistGenres('M83'), mb.artistGenres('m83')])
+    expect(a).toEqual(['Electronic', 'Shoegaze', 'Synth Pop'])
+    expect(b).toEqual(a)
+    expect(calls[1]! - calls[0]!).toBeGreaterThanOrEqual(55)
+  })
+
+  it('musicbrainz returns [] for low-confidence or unknown artists, throws on http errors', async () => {
+    const low = createMusicBrainz({ fetchImpl: (async () => json({ artists: [{ name: 'Nobody', score: 40, tags: [{ name: 'x', count: 1 }] }] })) as unknown as typeof fetch, minIntervalMs: 0 })
+    expect(await low.artistGenres('Nobody')).toEqual([])
+    const down = createMusicBrainz({ fetchImpl: (async () => json({}, 503)) as unknown as typeof fetch, minIntervalMs: 0 })
+    await expect(down.artistGenres('x')).rejects.toThrow('rate limited')
+  })
+
+  it('last.fm parses similar artists/tracks and surfaces api errors', async () => {
+    const f = async (u: unknown): Promise<Response> =>
+      String(u).includes('artist.getsimilar')
+        ? json({ similarartists: { artist: [{ name: 'Daft Punk' }, { name: 'Justice' }] } })
+        : String(u).includes('track.getsimilar')
+          ? json({ similartracks: { track: [{ name: 'Song', artist: { name: 'Band' } }] } })
+          : json({ error: 10, message: 'Invalid API key' })
+    const lf = createLastFm({ apiKey: 'k', fetchImpl: f as unknown as typeof fetch })
+    expect(await lf.similarArtists('M83')).toEqual(['Daft Punk', 'Justice'])
+    expect(await lf.similarTracks('M83', 'Midnight City')).toEqual([{ artist: 'Band', title: 'Song' }])
+    expect(await lf.validate()).toBe(false)
   })
 })

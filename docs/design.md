@@ -255,8 +255,7 @@ docs/          design, ADRs, provider notes
 | **M2 (done)** | SQLite (desktop) / IndexedDB (web), incremental folder scanner + tags + cover art, local provider, `vega-media://` protocol, web build | Point at music folder; library persists and plays on both platforms |
 | **M3 (done)** | Audius (no key), Jamendo (free client id) and Internet Archive providers; desktop stream cache (disk LRU, offline replay, https-public-only proxy); source chips; stream-error skip | Search/browse returns online results; plays with no key; replays work offline on desktop |
 | **M4 (done)** | Accounts + cloud sync (Supabase): email auth, Postgres with RLS, sync of likes/playlists/history (see docs/supabase-setup.md) | Sign in on web or desktop, library follows you across devices |
-| M4 | MusicBrainz/Last.fm/Cover Art enrichment, recs v1, smart playlists | Daily Mix & Discover from real history |
-| M5 | Metadata + recommendations v2: MusicBrainz/Cover Art enrichment, Last.fm similar (optional key), co-listening, smart playlists, search ranking | Daily Mix and Discover use real tags; smart playlists update live |
+| **M5 (done)** | Metadata + recommendations v2: MusicBrainz artist genres (cached, 1 req/s), Last.fm similar artists (optional key), session co-listening, radio from any track, smart playlists (synced), search ranking. Cover Art Archive enrichment deferred | Daily Mix and Discover use real tags; smart playlists update live |
 | M6 | Lyra integration: LRCLIB synced lyrics, karaoke mode, fullscreen now-playing | Lyrics follow Vega playback |
 | M7 | Optional power providers (yt-dlp, Piped fallback), radio (radio-browser), EQ, desktop installer | Installable build |
 | M8 | Android shell | Parity |

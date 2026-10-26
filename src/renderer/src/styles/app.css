@@ -198,3 +198,12 @@ code { background: rgba(255, 255, 255, 0.08); padding: 1px 5px; border-radius: 4
 .avatar.sync-error { border-color: #ff7a7a; }
 
 .narrow-select { width: 110px; }
+
+.side-actions { display: flex; gap: 2px; }
+.smart-mark { color: var(--accent-2); margin-right: 6px; }
+.hero-art.smart { background: linear-gradient(135deg, #2b6cb0, #5b3fd0); color: #fff; }
+.rule-head { color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.rule { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rule select, .rule-head select, .rule input { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); padding: 8px 10px; font-size: 13px; outline: none; }
+.rule input { width: 160px; }
+.rule input[type=number] { width: 90px; }

@@ -8,7 +8,7 @@ Live web version: https://vega-psi-lac.vercel.app
 
 Stack: Electron + React + TypeScript + Zustand (same as Lyra).
 
-## Status: milestone 4 (accounts and cloud sync on top of M1-M3)
+## Status: milestone 5 (smarter recommendations on top of M1-M4)
 
 Add a music folder under **Sources**: it is scanned (tags, duration, cover art) into SQLite on desktop or IndexedDB in the browser, searchable instantly, and played from disk. A built-in **demo provider** (fictional catalog) stays available. Online sources plug in behind the
 `SourceProvider` interface later: local files, Audius, Jamendo, Internet Archive, yt-dlp. See
@@ -17,6 +17,8 @@ Add a music folder under **Sources**: it is scanned (tags, duration, cover art) 
 Online: Audius works out of the box (no key). Jamendo needs a free client ID, paste it under Sources.
 
 Optional accounts (Supabase): sign in to sync likes, playlists and listening history across devices. Setup in [docs/supabase-setup.md](docs/supabase-setup.md); without credentials Vega stays fully local.
+
+Recommendations: genres learned from MusicBrainz, optional Last.fm similar artists, session co-listening, radio from any song, rule-based smart playlists.
 
 Works today: search, play/queue/shuffle/repeat, likes, playlists (create, rename, reorder, delete), listening
 insights (top artists/genres/tracks, clock, streak), recommendations (Made for you, Discover), persisted locally (SQLite / IndexedDB) and synced when signed in.
@@ -40,7 +42,7 @@ Shortcuts: Space play/pause, Ctrl+Left/Right previous/next.
 
 ```
 src/shared/      Track/Provider/Library contracts, SourceRegistry (fan-out, dedupe, circuit breaker), recs, stats
-src/providers/   mock, local; audius/... later
+src/providers/   mock, local, audius, jamendo, archive, metadata (MusicBrainz, Last.fm)
 src/renderer/    React UI, stores, audio engine (store/player.ts)
 src/main/        Electron shell: SQLite (db.ts), folder scanner, vega-media:// protocol, IPC
 src/preload/     contextBridge API

@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useCatalog } from './store/catalog'
+import { useLibrary } from './store/library'
+import { useMeta } from './store/meta'
 import './store/auth' // starts session restore and background sync
 import { PlayerBar } from './components/PlayerBar'
 import { QueuePanel } from './components/QueuePanel'
@@ -11,6 +13,7 @@ import { Library } from './views/Library'
 import { PlaylistView } from './views/PlaylistView'
 import { Search } from './views/Search'
 import { Account } from './views/Account'
+import { SmartView } from './views/SmartView'
 import { Sources } from './views/Sources'
 import { Stats } from './views/Stats'
 
@@ -21,6 +24,15 @@ export function App() {
   useEffect(() => {
     void useCatalog.getState().refresh()
   }, [])
+
+  // Background enrichment: learn genres for artists we know nothing about (1 request/s, cached).
+  const catalog = useCatalog((s) => s.tracks)
+  const events = useLibrary((s) => s.events)
+  const liked = useLibrary((s) => s.liked)
+  useEffect(() => {
+    const t = setTimeout(() => useMeta.getState().request([...liked, ...events.slice(-200).map((e) => e.track), ...catalog.slice(0, 300)]), 1500)
+    return () => clearTimeout(t)
+  }, [catalog, events, liked])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -47,6 +59,7 @@ export function App() {
         {view.name === 'sources' && <Sources />}
         {view.name === 'account' && <Account />}
         {view.name === 'playlist' && <PlaylistView id={view.id} />}
+        {view.name === 'smart' && <SmartView id={view.id} key={view.id} />}
       </main>
       {queueOpen && <QueuePanel />}
       <PlayerBar />
