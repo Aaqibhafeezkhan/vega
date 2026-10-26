@@ -80,3 +80,14 @@
 :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric:not(.is-active)[data-dist='2'] { opacity: 0.3; }
 :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric:not(.is-active)[data-dist='3'] { opacity: 0; }
 :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyrics__footer { bottom: calc(clamp(16px, 3vh, 28px) + 96px); right: clamp(32px, 4.5vw, 72px); }
+
+/* phones: fullscreen cinema stacks (lyrics on top, compact dock below) */
+@media (max-width: 760px) {
+  .cine-pills button { padding: 7px 12px; font-size: 12px; }
+  .cine-dock { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom, 0px)); height: auto; padding: 10px 16px 12px; border-radius: 28px; grid-template-columns: 1fr; gap: 2px; }
+  .cine-l, .cine-r { display: none; }
+  :root:not([data-platform='android']) .full.is-cinema.layout-cinema .full__lyrics { left: 20px; width: calc(100% - 40px); top: 14%; bottom: 170px; }
+  :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyric { font-size: min(calc(var(--lyric-size) * 1.15), 5.6vh); }
+  :root:not([data-platform='android']) .full.is-cinema.layout-cinema .lyrics--full .lyrics__footer { display: none; }
+  .full__device { display: none; }
+}

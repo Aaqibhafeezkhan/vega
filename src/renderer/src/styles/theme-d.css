@@ -117,3 +117,59 @@ kbd { font-family: var(--mono); }
 .tile.mix > :not(.vinyl) { position: relative; z-index: 2; }
 .tile.mix { font-size: clamp(48px, 6.4vw, 112px); }
 @media (max-width: 1400px) { .mix-row p { display: none; } }
+
+/* ================= phones and small screens: bottom tab bar, mini player, full-width stage ================= */
+@media (max-width: 760px) {
+  :root { --tab-h: calc(60px + env(safe-area-inset-bottom, 0px)); --dock-h: 66px; }
+  .app, .app.with-drawer { display: flex; flex-direction: column; height: 100dvh; padding: 0; gap: 0; }
+  .app > .dock { order: 2; }
+  .stage { flex: 1; min-height: 0; border: 0; border-radius: 0; background: rgba(9, 10, 16, 0.4); backdrop-filter: none; }
+  .aurora { filter: blur(60px) saturate(1.3); }
+
+  /* rail becomes the bottom tab bar (Home, Search, Library, Radio, Settings) */
+  .rail { position: fixed; z-index: 45; left: 0; right: 0; bottom: 0; height: var(--tab-h); padding: 0 6px env(safe-area-inset-bottom, 0px); flex-direction: row; align-items: center; justify-content: space-around; gap: 0; border-radius: 22px 22px 0 0; border-width: 1px 0 0; background: rgba(10, 11, 18, 0.92); }
+  .brand, .rail-head, .rail-list, .side-input, .account-chip { display: none; }
+  .rail-nav { flex: 1; flex-direction: row; justify-content: space-around; gap: 0; }
+  .nav-item { width: auto; flex: 1; flex-direction: column; gap: 3px; padding: 8px 0; font-size: 10.5px; border-radius: 14px; justify-content: center; }
+  .nav-item span { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0; }
+  .nav-item.on { background: none; box-shadow: none; color: var(--accent); }
+  .nav-item.on::before { left: 30%; right: 30%; top: 0; bottom: auto; width: auto; height: 3px; border-radius: 0 0 4px 4px; }
+  .nav-item:nth-child(5), .nav-item:nth-child(6) { display: none; }
+
+  /* mini player sits above the tab bar */
+  .dock { position: fixed; z-index: 44; left: 8px; right: 8px; bottom: calc(var(--tab-h) + 6px); height: var(--dock-h); padding: 0 12px 0 8px; border-radius: 22px; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .dock-art, .dock-art .cover { width: 48px !important; height: 48px !important; }
+  .dock-center { flex-direction: row; align-items: center; }
+  .dock-center .transport { gap: 6px; }
+  .stage .main { padding-bottom: calc(var(--dock-h) + var(--tab-h) + 24px); }
+
+  /* top bar: search + avatar, language pills on their own row */
+  .topbar { grid-template-columns: minmax(0, 1fr) auto; padding: max(12px, env(safe-area-inset-top, 0px)) 14px 0; gap: 10px; }
+  .topbar-nav, .topbar-end .cmd-chip { display: none; }
+  .topbar .topsearch { order: 1; }
+  .topbar-end { order: 2; margin-left: 0; }
+  .langs { order: 3; grid-column: 1 / -1; }
+
+  /* pages */
+  .page-pad { padding: 8px 14px 24px; }
+  .home-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .home-head .display { font-size: clamp(34px, 11vw, 46px); }
+  .home-stats { display: none; }
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(120px, auto); gap: 10px; }
+  .tile.mix { grid-column: 1 / -1; grid-row: auto; min-height: 250px; font-size: clamp(52px, 17vw, 76px); }
+  .tile { padding: 14px; font-size: 21px; border-radius: 20px; min-height: 120px; }
+  .vinyl { width: 190px; height: 190px; right: -60px; bottom: -60px; }
+  .mix-go { width: 54px; height: 54px; }
+  .charts { grid-template-columns: 1fr; }
+  .rank { grid-template-columns: 38px 46px minmax(0, 1fr); gap: 10px; }
+  .rank .n { font-size: 26px; }
+  .shelf-head .shelf-tools .icon-btn { display: none; }
+  .hero-head { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .hero-art { width: 150px; height: 150px; }
+  .hero-head h1, .page-pad h1 { font-size: clamp(34px, 11vw, 48px); }
+  .toggle-row { flex-wrap: wrap; }
+
+  /* queue / lyrics drawer becomes a full-width sheet over the page */
+  .drawer { position: fixed; z-index: 43; left: 0; right: 0; top: 0; bottom: calc(var(--tab-h) + var(--dock-h) + 14px); width: auto; border-radius: 0 0 24px 24px; background: rgba(10, 11, 18, 0.97); padding: max(12px, env(safe-area-inset-top, 0px)) 10px 10px; }
+  .toasts { bottom: calc(var(--tab-h) + var(--dock-h) + 20px); }
+}
