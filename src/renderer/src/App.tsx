@@ -22,6 +22,7 @@ import { LyraPlayer } from './views/LyraPlayer'
 import { PlaylistView } from './views/PlaylistView'
 import { Radio } from './views/Radio'
 import { Search } from './views/Search'
+import { Settings } from './views/Settings'
 import { SmartView } from './views/SmartView'
 import { Sources } from './views/Sources'
 import { Stats } from './views/Stats'
@@ -76,14 +77,14 @@ export function App() {
         usePlayer.getState().togglePlay()
       } else if (e.code === 'ArrowRight' && e.ctrlKey) usePlayer.getState().next()
       else if (e.code === 'ArrowLeft' && e.ctrlKey) usePlayer.getState().prev()
-      else if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey && usePlayer.getState().queue.length) useUi.getState().openNowPlaying()
+      else if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey && usePlayer.getState().queue.length) useUi.getState().togglePanel('lyrics')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   return (
-    <div className={`app${panel ? ' with-drawer' : ''}`}>
+    <div className={`app${panel ? ' with-drawer' : ''}${panel === 'lyrics' ? ' wide-drawer' : ''}`}>
       <div className="ambient" aria-hidden />
       <Sidebar />
       <section className="stage">
@@ -98,6 +99,7 @@ export function App() {
               {view.name === 'stats' && <Stats />}
               {view.name === 'sources' && <Sources />}
               {view.name === 'account' && <Account />}
+              {view.name === 'settings' && <Settings />}
               {view.name === 'playlist' && <PlaylistView id={view.id} />}
               {view.name === 'smart' && <SmartView id={view.id} key={view.id} />}
             </motion.div>

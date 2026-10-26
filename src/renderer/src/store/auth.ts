@@ -1,7 +1,7 @@
 import type { Session, User } from '@supabase/supabase-js'
 import { create } from 'zustand'
 import { load, save } from '@/lib/persist'
-import { cloudEnabled, supabase } from '@/lib/supabase'
+import { AUTH_REDIRECT, cloudEnabled, supabase } from '@/lib/supabase'
 import { syncOnce } from '@/lib/sync'
 import { useLibrary } from './library'
 
@@ -85,7 +85,7 @@ export const useAuth = create<AuthState>((set, get) => {
       const { data, error } = await supabase!.auth.signUp({
         email,
         password,
-        options: { data: displayName ? { display_name: displayName } : undefined, emailRedirectTo: window.location.origin }
+        options: { data: displayName ? { display_name: displayName } : undefined, emailRedirectTo: AUTH_REDIRECT }
       })
       if (error) throw error
       return { needsConfirm: !data.session }
@@ -102,7 +102,7 @@ export const useAuth = create<AuthState>((set, get) => {
     },
 
     resetPassword: async (email) => {
-      const { error } = await supabase!.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+      const { error } = await supabase!.auth.resetPasswordForEmail(email, { redirectTo: AUTH_REDIRECT })
       if (error) throw error
     },
 

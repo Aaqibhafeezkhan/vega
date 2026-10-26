@@ -27,10 +27,10 @@ export function PlayerBar() {
       <div className="dock-left">
         {track ? (
           <>
-            <button className="dock-art" onClick={openNowPlaying} aria-label="Open the Lyra player" title="Open the Lyra player">
+            <button className="dock-art" onClick={() => togglePanel('lyrics')} aria-label="Show lyrics" title="Show lyrics">
               <Cover track={track} size={60} radius={12} />
               <span className="dock-art-hover">
-                <Icon name="expand" size={18} />
+                <Icon name="lyrics" size={18} />
               </span>
             </button>
             <div className="dock-meta">
@@ -93,11 +93,14 @@ export function PlayerBar() {
       </div>
 
       <div className="dock-right">
-        <button className="icon-btn" onClick={openNowPlaying} aria-label="Lyrics" title="Lyrics and fullscreen player" disabled={!track}>
+        <button className={`icon-btn${panel === 'lyrics' ? ' on' : ''}`} onClick={() => togglePanel('lyrics')} aria-label="Lyrics" title="Lyrics (L)" disabled={!track}>
           <Icon name="lyrics" size={19} />
         </button>
         <button className={`icon-btn${panel === 'queue' ? ' on' : ''}`} onClick={() => togglePanel('queue')} aria-label="Queue" title="Queue">
           <Icon name="queue" size={19} />
+        </button>
+        <button className="icon-btn" onClick={openNowPlaying} aria-label="Fullscreen player" title="Fullscreen player" disabled={!track}>
+          <Icon name="expand" size={19} />
         </button>
         {window.vega && (
           <button className={`icon-btn${eqOpen ? ' on' : ''}`} onClick={() => setEqOpen(!eqOpen)} aria-label="Equalizer" title="Equalizer">

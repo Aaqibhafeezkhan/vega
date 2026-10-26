@@ -12,7 +12,8 @@ const NAV: { view: View; label: string; icon: string }[] = [
   { view: { name: 'library' }, label: 'Library', icon: 'library' },
   { view: { name: 'radio' }, label: 'Radio', icon: 'radio' },
   { view: { name: 'stats' }, label: 'Insights', icon: 'stats' },
-  { view: { name: 'sources' }, label: 'Sources', icon: 'folder' }
+  { view: { name: 'sources' }, label: 'Sources', icon: 'folder' },
+  { view: { name: 'settings' }, label: 'Settings', icon: 'settings' }
 ]
 
 function Mosaic({ ids }: { ids: number[] }) {

@@ -3,6 +3,7 @@ import type { VegaHost } from '../../../../lyra/host/types'
 import { refKey, type Track } from '@shared/types'
 import { useLibrary } from '@/store/library'
 import { getPosition, usePlayer } from '@/store/player'
+import { toStreamUrl } from '@/lib/desktopBackend'
 import { useUi } from '@/store/ui'
 
 /**
@@ -133,6 +134,20 @@ export const vegaHost: VegaHost = {
   },
   queue: (): QueueItem[] => usePlayer.getState().queue.map((t) => ({ id: refKey(t.ref), title: t.title, artists: t.artists, artworkUrl: t.artworkUrl ?? null })),
   close: () => useUi.getState().closeNowPlaying(),
+  fullscreen: () => {
+    const ui = useUi.getState()
+    ui.closePanel()
+    ui.openNowPlaying()
+  },
+  closePanel: () => useUi.getState().closePanel(),
+  // yt-dlp (desktop, user-installed) lets Lyra's background use the song's real music video without any API key
+  video: window.vega
+    ? {
+        available: async () => (await window.vega!.ytdlp.status()).installed,
+        search: async (q) => (await window.vega!.ytdlp.search(q, 6)).map((e) => ({ videoId: e.id, title: e.title, channel: e.channel, durationSec: e.durationSec })),
+        url: async (id) => toStreamUrl(await window.vega!.ytdlp.video(id, 1080))
+      }
+    : undefined,
   // Apple's preview CDN allows cross-origin reads (CORS *), so clips can be played and sampled directly
   clipUrl: (url) => url
 }

@@ -139,6 +139,22 @@ export class YtDlp {
     return parseSearch(r.stdout)
   }
 
+  /** Direct URL of the video picture only (no sound), up to maxHeight: used as the muted animated background in Lyra. */
+  async videoUrl(id: string, maxHeight = 1080): Promise<string> {
+    if (!VIDEO_ID.test(id)) throw new Error('bad video id')
+    const h = Math.min(2160, Math.max(240, Math.round(maxHeight)))
+    const r = await this.slot(() =>
+      this.run(
+        this.binaryPath(),
+        ['--ignore-config', '--no-warnings', '--no-playlist', '-f', `bestvideo[height<=${h}][vcodec^=avc1][ext=mp4]/bestvideo[height<=${h}][ext=mp4]/bestvideo[height<=${h}]`, '-g', '--', `https://www.youtube.com/watch?v=${id}`],
+        { timeoutMs: 25_000 }
+      )
+    )
+    const url = r.stdout.trim().split('\n')[0] ?? ''
+    if (r.code !== 0 || !url.startsWith('https://')) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp could not resolve this video')
+    return url
+  }
+
   /** Direct audio URL for one video (expires after a few hours, so it is resolved just in time). */
   async streamUrl(id: string): Promise<string> {
     if (!VIDEO_ID.test(id)) throw new Error('bad video id')

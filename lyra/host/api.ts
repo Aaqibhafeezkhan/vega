@@ -1,4 +1,5 @@
 import { thumbCrop, type DecodedImage } from '../core/background/bars'
+import { rankVideos } from '../core/background/rank'
 import { createBackgroundResolver, type SongBg } from '../core/background/resolver'
 import { youtube } from '../core/background/youtube'
 import { lyricsService } from '../core/lyrics/service'
@@ -6,6 +7,9 @@ import type { LyraApi, Unsubscribe } from '../shared/ipc'
 import {
   DEFAULT_SETTINGS,
   type BackgroundMedia,
+  type BackgroundResolution,
+  type BackgroundSpec,
+  type Track,
   type ConnectionStatus,
   type ModeEvent,
   type PlaybackSnapshot,
@@ -72,8 +76,8 @@ function sanitize(s: Settings): Settings {
   }
 }
 
-// ---------------- window / mode: Lyra is always the fullscreen player inside Vega
-const mode: ViewMode = 'full'
+// ---------------- window / mode: ?mode=mini embeds Lyra's expanded player in Vega's side panel; otherwise it is the fullscreen player
+const mode: ViewMode = new URLSearchParams(location.search).get('mode') === 'mini' ? 'mini' : 'full'
 const modeChanged = emitter<ModeEvent>()
 
 // ---------------- playback (pushed by Vega)
@@ -131,7 +135,7 @@ async function decodeThumb(bytes: ArrayBuffer): Promise<DecodedImage | null> {
   return { width: 160, height: 90, pixels: d.data, order: 'rgba' }
 }
 
-const resolveBackground = createBackgroundResolver({
+const resolveBase = createBackgroundResolver({
   settings: () => settingsStore.get(),
   songs: () => songsStore.get().songs,
   mediaSpec: (m, scope) => {
@@ -141,6 +145,42 @@ const resolveBackground = createBackgroundResolver({
   clipUrl: (url) => host().clipUrl(url),
   crop: (videoId) => thumbCrop(videoId, decodeThumb)
 })
+
+const videoSpecs = new Map<string, Promise<BackgroundSpec | null>>()
+
+/** The song's real music video through the host's yt-dlp (desktop): no API key, picture only, muted. */
+function ytdlpVideoSpec(track: Track): Promise<BackgroundSpec | null> {
+  let p = videoSpecs.get(track.id)
+  if (!p) {
+    p = (async () => {
+      const v = host().video
+      if (!v || !(await v.available())) return null
+      const artist = track.artists[0] ?? ''
+      const found = await v.search(`${artist} ${track.title} official video`)
+      const ranked = rankVideos(
+        { title: track.title, artist, durationMs: track.durationMs },
+        found.map((f) => ({ videoId: f.videoId, title: f.title, channel: f.channel, durationSec: f.durationSec, embeddable: true }))
+      )
+      const best = ranked.find((r) => r.acceptable)
+      if (!best) return null
+      return { kind: 'preview', url: await v.url(best.videoId), title: best.title, width: 1920 } satisfies BackgroundSpec
+    })().catch(() => null)
+    videoSpecs.set(track.id, p)
+    p.then((s) => !s && videoSpecs.delete(track.id)) // retry later when nothing was found
+    if (videoSpecs.size > 40) videoSpecs.delete(videoSpecs.keys().next().value!)
+  }
+  return p
+}
+
+async function resolveBackground(track: Track): Promise<BackgroundResolution> {
+  const base = await resolveBase(track)
+  const style = settingsStore.get().backgroundStyle
+  const pinned = base.hasSongMedia || !!songsStore.get().songs[track.id]?.youtube
+  if (pinned || (style !== 'auto' && style !== 'youtube') || (style === 'auto' && base.hasGlobalMedia)) return base
+  const spec = await ytdlpVideoSpec(track)
+  if (!spec) return base
+  return { ...base, spec, youtube: 'found', ...(base.spec.kind === 'living' || base.spec.kind === 'still' ? {} : { fallback: base.spec }) }
+}
 
 /** Pick a video/image file from disk and keep it inside the browser/app for use as a background. */
 function chooseFile(): Promise<{ file: File } | null> {
@@ -186,8 +226,13 @@ export const vegaApi: LyraApi = {
   },
   window: {
     // Lyra "leaving fullscreen" means closing the overlay in Vega
+    // In the side panel, Lyra's "fullscreen" button asks Vega to open the fullscreen player and its "collapse" button closes the
+    // panel. In the fullscreen player, leaving fullscreen closes it.
     setMode: async (m) => {
-      if (m !== 'full') host().close()
+      if (mode === 'mini') {
+        if (m === 'full') host().fullscreen()
+        else if (m === 'compact' || m === 'minimal') host().closePanel()
+      } else if (m !== 'full') host().close()
     },
     getMode: async () => mode,
     onMode: modeChanged.on,
@@ -199,9 +244,9 @@ export const vegaApi: LyraApi = {
     dragStart: noop,
     dragMove: noop,
     dragEnd: noop,
-    hide: () => host().close(),
-    minimize: () => host().close(),
-    quit: () => host().close()
+    hide: () => (mode === 'mini' ? host().closePanel() : host().close()),
+    minimize: () => (mode === 'mini' ? host().closePanel() : host().close()),
+    quit: () => (mode === 'mini' ? host().closePanel() : host().close())
   },
   spotify: {
     connect: async () => status,

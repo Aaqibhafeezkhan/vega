@@ -72,6 +72,20 @@ describe('YtDlp', () => {
     await expect(y.streamUrl('x; calc')).rejects.toThrow('bad video id')
   })
 
+  it('asks for a muted video-only stream capped at the requested height', async () => {
+    const calls: string[][] = []
+    const run: Runner = async (_b, args) => {
+      calls.push(args)
+      return { stdout: 'https://rr1.googlevideo.com/video
+', stderr: '', code: 0 }
+    }
+    const y = new YtDlp(dir, 'linux', run)
+    expect(await y.videoUrl('dQw4w9WgXcQ', 720)).toBe('https://rr1.googlevideo.com/video')
+    expect(calls[0]![calls[0]!.indexOf('-f') + 1]).toContain('height<=720')
+    expect(calls[0]!.slice(-2)).toEqual(['--', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'])
+    await expect(y.videoUrl('bad id')).rejects.toThrow('bad video id')
+  })
+
   it('surfaces yt-dlp errors', async () => {
     const run: Runner = async () => ({ stdout: '', stderr: 'ERROR: Sign in to confirm you are not a bot', code: 1 })
     await expect(new YtDlp(dir, 'linux', run).streamUrl('dQw4w9WgXcQ')).rejects.toThrow('not a bot')

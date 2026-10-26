@@ -1,3 +1,4 @@
+import '@/lib/lyraHost'
 import { usePlayer } from '@/store/player'
 import { useUi } from '@/store/ui'
 import { Cover } from './Cover'
@@ -5,6 +6,8 @@ import { Icon } from './Icon'
 
 /** Right drawer: what is playing, and what is next. */
 export function QueuePanel() {
+  const panel = useUi((s) => s.panel)
+  const togglePanel = useUi((s) => s.togglePanel)
   const closePanel = useUi((s) => s.closePanel)
   const openNowPlaying = useUi((s) => s.openNowPlaying)
   const { queue, index, playIndex, removeFromQueue, clearQueue } = usePlayer()
@@ -15,16 +18,27 @@ export function QueuePanel() {
   return (
     <aside className="drawer" aria-label="Queue">
       <div className="drawer-head">
-        <h3>Queue</h3>
-        <button className="link" onClick={clearQueue} disabled={queue.length < 2}>
-          Clear
-        </button>
-        <button className="icon-btn" onClick={closePanel} aria-label="Close queue">
+        <div className="tabs" role="tablist">
+          <button role="tab" aria-selected={panel === 'queue'} className={panel === 'queue' ? 'on' : ''} onClick={() => panel !== 'queue' && togglePanel('queue')}>
+            Queue
+          </button>
+          <button role="tab" aria-selected={panel === 'lyrics'} className={panel === 'lyrics' ? 'on' : ''} onClick={() => panel !== 'lyrics' && togglePanel('lyrics')}>
+            Lyrics
+          </button>
+        </div>
+        {panel === 'queue' && (
+          <button className="link" onClick={clearQueue} disabled={queue.length < 2}>
+            Clear
+          </button>
+        )}
+        <button className="icon-btn" onClick={closePanel} aria-label="Close panel">
           <Icon name="close" size={18} />
         </button>
       </div>
 
-      {!queue.length && (
+      {panel === 'lyrics' && <iframe className="lyra-panel-frame" src="lyra/index.html?mode=mini" title="Lyra" allow="autoplay" />}
+
+      {panel === 'queue' && !queue.length && (
         <div className="empty">
           <Icon name="queue" size={28} />
           <p>Your queue is empty</p>
@@ -32,6 +46,7 @@ export function QueuePanel() {
         </div>
       )}
 
+      {panel === 'queue' && (
       <div className="drawer-scroll">
         {current && (
           <>
@@ -79,6 +94,7 @@ export function QueuePanel() {
           </div>
         ))}
       </div>
+      )}
     </aside>
   )
 }

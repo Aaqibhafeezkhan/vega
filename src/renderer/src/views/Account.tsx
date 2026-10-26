@@ -11,7 +11,7 @@ function ago(ts: number | null): string {
 }
 
 export function Account() {
-  const { enabled, ready, user, sync, syncError, lastSync, signIn, signUp, signOut, resetPassword, syncNow } = useAuth()
+  const { ready, user, sync, syncError, lastSync, signIn, signUp, signOut, resetPassword, syncNow } = useAuth()
   const likes = useLibrary((s) => s.liked.length)
   const playlists = useLibrary((s) => s.playlists.length)
   const plays = useLibrary((s) => s.events.length)
@@ -22,17 +22,6 @@ export function Account() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
 
-  if (!enabled) {
-    return (
-      <div className="page-pad">
-        <h1>Account</h1>
-        <div className="banner">
-          Cloud sync is not configured in this build, so Vega runs fully on this device. Add <code>VITE_SUPABASE_URL</code> and{' '}
-          <code>VITE_SUPABASE_ANON_KEY</code> to <code>.env</code> to enable accounts.
-        </div>
-      </div>
-    )
-  }
   if (!ready) return <div className="page-pad muted">Loading…</div>
 
   if (user) {

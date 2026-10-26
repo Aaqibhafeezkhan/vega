@@ -15,6 +15,19 @@ export interface VegaHost {
   queue(): QueueItem[]
   /** Lyra asked to leave the player (Esc / exit fullscreen). */
   close(): void
+  /** The side panel asks to switch to the fullscreen player. */
+  fullscreen(): void
+  /** The side panel asks to be closed. */
+  closePanel(): void
+  /**
+   * Optional (desktop with yt-dlp installed): finds the song's music video and returns a direct, playable URL for the picture
+   * only, so Lyra's background needs no YouTube API key. Resolves null when unavailable.
+   */
+  video?: {
+    available(): Promise<boolean>
+    search(query: string): Promise<{ videoId: string; title: string; channel: string; durationSec: number }[]>
+    url(videoId: string): Promise<string>
+  }
   /** Lyra can ask the host to run a desktop-only helper (e.g. proxy an Apple preview clip). */
   clipUrl(url: string): string
 }

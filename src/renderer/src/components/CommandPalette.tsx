@@ -36,6 +36,7 @@ export function CommandPalette() {
       { id: 'go-radio', label: 'Go to Radio', icon: 'radio', run: () => go({ name: 'radio' }) },
       { id: 'go-stats', label: 'Go to Insights', icon: 'stats', run: () => go({ name: 'stats' }) },
       { id: 'go-sources', label: 'Go to Sources', icon: 'folder', run: () => go({ name: 'sources' }) },
+      { id: 'go-settings', label: 'Settings and updates', icon: 'settings', run: () => go({ name: 'settings' }) },
       { id: 'go-account', label: 'Account and sync', icon: 'user', run: () => go({ name: 'account' }) },
       { id: 'new-smart', label: 'New smart playlist', icon: 'spark', run: () => go({ name: 'smart', id: 'new' }) },
       { id: 'toggle', label: p.playing ? 'Pause' : 'Play', hint: 'Space', icon: p.playing ? 'pause' : 'play', run: () => p.togglePlay() },

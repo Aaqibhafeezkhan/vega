@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
-import { initLibrary, registerMediaScheme, serveApp } from './library'
+import { initLibrary, kvGet, registerMediaScheme, serveApp } from './library'
+import { initUpdater } from './updater'
 
 registerMediaScheme()
 
@@ -38,6 +39,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   initLibrary()
   serveApp(join(__dirname, '../renderer'))
+  initUpdater(() => kvGet('update.auto') !== 'false')
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

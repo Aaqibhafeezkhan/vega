@@ -48,6 +48,9 @@ export function serveApp(rendererDir: string): void {
   })
 }
 
+/** Reads one app-state value (stored by the renderer as JSON text). */
+export const kvGet = (key: string): string | undefined => db?.kvGetAll()[key]
+
 export function initLibrary(): void {
   const data = app.getPath('userData')
   db = new LibraryDb(join(data, 'vega.db'))
@@ -116,6 +119,7 @@ export function initLibrary(): void {
     }
   })
   ipcMain.handle(CH.ytSearch, (_e, q: string, limit: number) => ytdlp.search(String(q), Number(limit) || 10))
+  ipcMain.handle(CH.ytVideo, (_e, id: string, h?: number) => ytdlp.videoUrl(String(id), Number(h) || 1080))
   ipcMain.handle(CH.ytResolve, (_e, id: string) => ytdlp.streamUrl(String(id)))
   ipcMain.handle(CH.cacheStats, () => cache.stats())
   ipcMain.handle(CH.cacheClear, () => cache.clear())

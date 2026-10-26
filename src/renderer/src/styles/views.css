@@ -142,3 +142,11 @@
 .rule input { width: 170px; }
 .rule input[type='number'] { width: 90px; }
 .form-links button + button { margin-left: 4px; }
+
+/* ---------- settings ---------- */
+.page-pad.wide-ish { max-width: 760px; }
+.shortcuts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+.shortcut { display: flex; align-items: center; gap: 12px; color: var(--text-2); }
+.shortcut kbd { min-width: 96px; text-align: center; }
+.pill[href] { text-decoration: none; }
+@media (max-width: 720px) { .shortcuts { grid-template-columns: 1fr; } }

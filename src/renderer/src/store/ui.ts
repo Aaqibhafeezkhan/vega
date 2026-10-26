@@ -8,10 +8,11 @@ export type View =
   | { name: 'sources' }
   | { name: 'account' }
   | { name: 'radio' }
+  | { name: 'settings' }
   | { name: 'playlist'; id: string }
   | { name: 'smart'; id: string }
 
-export type Panel = 'queue' | null
+export type Panel = 'queue' | 'lyrics' | null
 
 export interface Toast {
   id: number

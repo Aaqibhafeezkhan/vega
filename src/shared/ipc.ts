@@ -18,7 +18,8 @@ export const CH = {
   ytStatus: 'ytdlp:status',
   ytInstall: 'ytdlp:install',
   ytSearch: 'ytdlp:search',
-  ytResolve: 'ytdlp:resolve'
+  ytResolve: 'ytdlp:resolve',
+  ytVideo: 'ytdlp:video'
 } as const
 
 export const EV = {
@@ -42,11 +43,21 @@ export interface VegaDesktopApi {
     clear(): Promise<void>
     setMaxMb(mb: number): Promise<number>
   }
+  app: {
+    info(): Promise<{ version: string; platform: string; packaged: boolean }>
+  }
+  update: {
+    get(): Promise<UpdateState>
+    check(): Promise<void>
+    install(): Promise<void>
+    onState(cb: (s: UpdateState) => void): () => void
+  }
   ytdlp: {
     status(): Promise<{ installed: boolean; version?: string }>
     install(): Promise<{ ok: boolean; error?: string }>
     search(q: string, limit: number): Promise<{ id: string; title: string; channel: string; durationSec: number }[]>
     resolve(id: string): Promise<string>
+    video(id: string, maxHeight?: number): Promise<string>
   }
   kv: {
     getAll(): Promise<Record<string, string>>
@@ -55,6 +66,21 @@ export interface VegaDesktopApi {
 }
 
 /** Custom protocol that serves library audio/artwork to the renderer (supports Range requests). */
+export interface UpdateState {
+  state: 'idle' | 'checking' | 'downloading' | 'ready' | 'none' | 'error' | 'disabled'
+  version?: string
+  percent?: number
+  message?: string
+}
+
+export const UPDATE_CH = {
+  get: 'update:get',
+  check: 'update:check',
+  install: 'update:install',
+  info: 'app:info',
+  state: 'update:state'
+} as const
+
 export const MEDIA_SCHEME = 'vega-media'
 
 /** Serves the packaged UI (index.html and Lyra's iframe page) from a real origin instead of file://, so the two pages can talk. */
