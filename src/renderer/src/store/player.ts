@@ -36,6 +36,11 @@ interface PlayerState {
 
 const audio = new Audio()
 audio.preload = 'auto'
+// Desktop media (vega-media://) is served with CORS headers, which lets the equalizer's Web Audio graph read the stream.
+if (window.vega) audio.crossOrigin = 'anonymous'
+
+/** The single playback element (the equalizer attaches its Web Audio graph to it). */
+export const getAudio = (): HTMLAudioElement => audio
 
 /** Tracks what the user actually heard of the current track, for the analytics log. */
 let session: { track: Track; startedAt: number; listenedMs: number; lastTick: number | null } | null = null

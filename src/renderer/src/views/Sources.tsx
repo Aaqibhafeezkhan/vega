@@ -98,6 +98,16 @@ export function Sources() {
         </label>
       </div>
       <div className="panel toggle-row">
+        <div>
+          <div className="row-title">Live radio</div>
+          <div className="row-sub">Thousands of internet radio stations (radio-browser.info). No account or key needed.</div>
+        </div>
+        <label className="switch">
+          <input type="checkbox" checked={online.radio} onChange={(e) => online.setRadio(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="panel toggle-row">
         <div className="grow">
           <div className="row-title">Jamendo</div>
           <div className="row-sub">
@@ -123,7 +133,7 @@ export function Sources() {
 
   if (!backend.supported) {
     return (
-      <div className="view">
+      <div className="page-pad">
         <h1>Sources</h1>
         <div className="banner">
           This browser cannot open local folders. Use Chrome, Edge or the Vega desktop app to add your own music. Online sources work everywhere.
@@ -134,7 +144,7 @@ export function Sources() {
   }
 
   return (
-    <div className="view">
+    <div className="page-pad">
       <div className="shelf-head">
         <div>
           <h1>Sources</h1>

@@ -5,13 +5,15 @@ import { applyOnlineSources } from '@/lib/sources'
 interface OnlineState {
   audius: boolean
   archive: boolean
+  radio: boolean
   jamendoClientId: string
   setAudius: (on: boolean) => void
   setArchive: (on: boolean) => void
+  setRadio: (on: boolean) => void
   setJamendoClientId: (id: string) => void
 }
 
-const initial = { audius: load<boolean>('online.audius', true), archive: load<boolean>('online.archive', true), jamendoClientId: load<string>('online.jamendoClientId', '') }
+const initial = { audius: load<boolean>('online.audius', true), archive: load<boolean>('online.archive', true), radio: load<boolean>('online.radio', true), jamendoClientId: load<string>('online.jamendoClientId', '') }
 applyOnlineSources(initial)
 
 export const useOnline = create<OnlineState>((set, get) => ({
@@ -24,6 +26,11 @@ export const useOnline = create<OnlineState>((set, get) => ({
   setArchive: (archive) => {
     save('online.archive', archive)
     set({ archive })
+    applyOnlineSources(get())
+  },
+  setRadio: (radio) => {
+    save('online.radio', radio)
+    set({ radio })
     applyOnlineSources(get())
   },
   setJamendoClientId: (id) => {

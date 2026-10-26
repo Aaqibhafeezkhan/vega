@@ -109,7 +109,6 @@ export function createArchiveProvider(opts: ArchiveOptions = {}): SourceProvider
         album: f.album?.trim() || meta.metadata?.title,
         durationMs: Math.round(parseLength(f.length) * 1000),
         year: Number.isFinite(year) && year > 1800 ? year : undefined,
-        artworkUrl: `${base}/services/img/${encodeURIComponent(id)}`
       }))
       .filter((t) => t.durationMs > 0)
   }

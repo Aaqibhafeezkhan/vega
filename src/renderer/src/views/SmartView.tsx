@@ -62,8 +62,8 @@ export function SmartView({ id }: { id: string }) {
     setDraft((d) => ({ ...d, conditions: d.conditions.map((x, j) => (j === i ? { ...x, ...c } : x)) }))
 
   return (
-    <div className="view">
-      <div className="hero">
+    <div className="page-pad">
+      <div className="hero-head">
         <div className="hero-art smart">
           <Icon name="star" size={56} />
         </div>

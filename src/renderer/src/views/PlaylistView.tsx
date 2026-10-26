@@ -12,12 +12,12 @@ export function PlaylistView({ id }: { id: string }) {
   const playTracks = usePlayer((s) => s.playTracks)
   const go = useUi((s) => s.go)
   const [editing, setEditing] = useState(false)
-  if (!playlist) return <div className="view muted">Playlist not found.</div>
+  if (!playlist) return <div className="page-pad muted">Playlist not found.</div>
   const mins = Math.round(playlist.tracks.reduce((n, t) => n + t.durationMs, 0) / 60_000)
 
   return (
-    <div className="view">
-      <div className="hero">
+    <div className="page-pad">
+      <div className="hero-head">
         <div className="hero-art">
           <Icon name="library" size={56} />
         </div>

@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { refKey, type Track } from '@shared/types'
 import { fmtTime } from '@/lib/format'
 import { radioFrom } from '@/lib/recommender'
 import { useLibrary } from '@/store/library'
 import { usePlayer } from '@/store/player'
+import { useUi } from '@/store/ui'
 import { Cover } from './Cover'
 import { Icon } from './Icon'
 
-const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive' }
+const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive', radio: 'Radio', local: 'Local' }
 
 interface Props {
   track: Track
@@ -27,31 +28,32 @@ export function TrackRow({ track, index, onPlay, extra }: Props) {
   const liked = useLibrary((s) => s.liked.some((x) => refKey(x.ref) === key))
   const toggleLike = useLibrary((s) => s.toggleLike)
   const [menu, setMenu] = useState(false)
+  const live = track.durationMs === 0
 
   return (
     <div className={`row${active ? ' active' : ''}`} onDoubleClick={onPlay}>
       <button className="row-idx" onClick={onPlay} aria-label={`Play ${track.title}`}>
         {active && playing ? <span className="eq" /> : <span className="num">{index !== undefined ? index + 1 : ''}</span>}
         <span className="hover-play">
-          <Icon name="play" size={14} />
+          <Icon name="play" size={15} />
         </span>
       </button>
-      <Cover track={track} size={40} radius={6} />
+      <Cover track={track} size={44} radius={10} />
       <div className="row-main">
         <div className="row-title">{track.title}</div>
         <div className="row-sub">
+          {SOURCE_LABEL[track.ref.source] && <span className={`src src-${track.ref.source}`}>{SOURCE_LABEL[track.ref.source]}</span>}
           {track.artists.join(', ')}
-          {SOURCE_LABEL[track.ref.source] && <span className="src">{SOURCE_LABEL[track.ref.source]}</span>}
         </div>
       </div>
       <div className="row-album">{track.album}</div>
       <button className={`icon-btn like${liked ? ' on' : ''}`} onClick={() => toggleLike(track)} aria-label={liked ? 'Unlike' : 'Like'}>
-        <Icon name={liked ? 'heart-fill' : 'heart'} size={16} />
+        <Icon name={liked ? 'heart-fill' : 'heart'} size={17} />
       </button>
-      <div className="row-time">{fmtTime(track.durationMs)}</div>
+      <div className="row-time">{live ? <span className="badge-live sm">LIVE</span> : fmtTime(track.durationMs)}</div>
       <div className="row-menu-wrap">
-        <button className="icon-btn" onClick={() => setMenu((m) => !m)} aria-label="More">
-          <Icon name="more" size={16} />
+        <button className="icon-btn" onClick={() => setMenu((m) => !m)} aria-label="More options">
+          <Icon name="more" size={18} />
         </button>
         {menu && <TrackMenu track={track} extra={extra} close={() => setMenu(false)} />}
       </div>
@@ -63,8 +65,25 @@ function TrackMenu({ track, extra, close }: { track: Track; extra?: Props['extra
   const playlists = useLibrary((s) => s.playlists)
   const addToPlaylist = useLibrary((s) => s.addToPlaylist)
   const createPlaylist = useLibrary((s) => s.createPlaylist)
+  const toast = useUi((s) => s.toast)
   const { playNext, enqueue } = usePlayer.getState()
-  const item = (label: string, run: () => void) => (
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') close()
+    }
+    window.addEventListener('keydown', onKey)
+    // flip upward when there is no room below
+    const el = ref.current
+    if (el) {
+      const r = el.getBoundingClientRect()
+      if (r.bottom > window.innerHeight - 110) el.classList.add('up')
+    }
+    return () => window.removeEventListener('keydown', onKey)
+  }, [close])
+
+  const item = (label: string, icon: string, run: () => void) => (
     <button
       className="menu-item"
       onClick={() => {
@@ -72,21 +91,40 @@ function TrackMenu({ track, extra, close }: { track: Track; extra?: Props['extra
         close()
       }}
     >
+      <Icon name={icon} size={16} />
       {label}
     </button>
   )
+
   return (
     <>
       <div className="menu-scrim" onClick={close} />
-      <div className="menu">
-        {item('Play next', () => playNext(track))}
-        {item('Add to queue', () => enqueue(track))}
-        {item('Start radio', () => void radioFrom(track).then((t) => usePlayer.getState().playTracks(t)))}
+      <div className="menu" ref={ref}>
+        {item('Play next', 'play', () => {
+          playNext(track)
+          toast('Playing next', 'ok')
+        })}
+        {item('Add to queue', 'queue', () => {
+          enqueue(track)
+          toast('Added to queue', 'ok')
+        })}
+        {item('Start radio', 'radio', () => {
+          toast('Building your radio…')
+          void radioFrom(track).then((t) => usePlayer.getState().playTracks(t))
+        })}
         <div className="menu-sep">Add to playlist</div>
-        {playlists.map((p) => item(p.name, () => addToPlaylist(p.id, track)))}
-        {item('+ New playlist', () => createPlaylist(track.title, [track]))}
-        {extra && <div className="menu-sep" />}
-        {extra?.map((e) => item(e.label, e.run))}
+        {playlists.map((p) =>
+          item(p.name, 'plus', () => {
+            addToPlaylist(p.id, track)
+            toast(`Added to ${p.name}`, 'ok')
+          })
+        )}
+        {item('New playlist', 'spark', () => {
+          createPlaylist(track.title, [track])
+          toast('Playlist created', 'ok')
+        })}
+        {extra && <div className="menu-sep">This list</div>}
+        {extra?.map((e) => item(e.label, 'chevron-right', e.run))}
       </div>
     </>
   )

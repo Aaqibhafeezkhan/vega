@@ -34,7 +34,7 @@ export function Stats() {
 
   if (!events.length) {
     return (
-      <div className="view">
+      <div className="page-pad">
         <h1>Insights</h1>
         <div className="banner">
           <div>No listening history yet. Play some songs, or load sample data to see what this page does.</div>
@@ -48,7 +48,7 @@ export function Stats() {
 
   const clockMax = Math.max(1, ...s.clock.flat())
   return (
-    <div className="view">
+    <div className="page-pad">
       <div className="shelf-head">
         <h1>Insights</h1>
         <button className="pill ghost" onClick={clear}>

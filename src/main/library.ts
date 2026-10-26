@@ -15,7 +15,7 @@ const scanning = new Set<number>()
 /** Must run before app is ready: lets the renderer stream <audio> from vega-media:// with Range support. */
 export function registerMediaScheme(): void {
   protocol.registerSchemesAsPrivileged([
-    { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } },
+    { scheme: MEDIA_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: true, corsEnabled: true } },
     { scheme: APP_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }
   ])
 }
@@ -58,7 +58,8 @@ export function initLibrary(): void {
 
   // vega-media://file/<trackId>  -> the audio file;  vega-media://art/<file> -> cached cover
   // vega-media://stream/<base64url(https url)> -> online stream, played from the disk cache when present
-  protocol.handle(MEDIA_SCHEME, async (req) => {
+  protocol.handle(MEDIA_SCHEME, async (req) => withCors(await handleMedia(req)))
+  const handleMedia = async (req: Request): Promise<Response> => {
     const url = new URL(req.url)
     const target = decodeURIComponent(url.pathname.replace(/^\//, ''))
     if (url.hostname === 'stream') {
@@ -76,7 +77,7 @@ export function initLibrary(): void {
     if (!path) return new Response('not found', { status: 404 })
     // net.fetch on file:// honours Range headers, so seeking works
     return net.fetch(pathToFileURL(path).toString(), { headers: req.headers })
-  })
+  }
 
   ipcMain.handle(CH.folders, () => db.folders())
 
@@ -115,6 +116,14 @@ export function initLibrary(): void {
   ipcMain.handle(CH.kvSet, (_e, key: string, value: string) => db.kvSet(String(key), String(value)))
 
   app.on('will-quit', () => db.close())
+}
+
+/** The renderer reads media through Web Audio (equalizer), which requires CORS; the protocol is only reachable from our own UI. */
+function withCors(res: Response): Response {
+  const headers = new Headers(res.headers)
+  headers.set('Access-Control-Allow-Origin', '*')
+  headers.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges')
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers })
 }
 
 const clamp = (n: unknown): number => Math.min(50_000, Math.max(1, Number(n) || 100))

@@ -24,7 +24,7 @@ export function Account() {
 
   if (!enabled) {
     return (
-      <div className="view">
+      <div className="page-pad">
         <h1>Account</h1>
         <div className="banner">
           Cloud sync is not configured in this build, so Vega runs fully on this device. Add <code>VITE_SUPABASE_URL</code> and{' '}
@@ -33,11 +33,11 @@ export function Account() {
       </div>
     )
   }
-  if (!ready) return <div className="view muted">Loading…</div>
+  if (!ready) return <div className="page-pad muted">Loading…</div>
 
   if (user) {
     return (
-      <div className="view narrow">
+      <div className="page-pad narrow">
         <h1>Account</h1>
         <div className="panel">
           <div className="row-title">{user.user_metadata?.display_name ?? user.email}</div>
@@ -91,7 +91,7 @@ export function Account() {
   }
 
   return (
-    <div className="view narrow">
+    <div className="page-pad narrow">
       <h1>{mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Reset password'}</h1>
       <p className="muted">Optional. Sign in to sync your likes, playlists and listening history across devices.</p>
       <form className="panel form" onSubmit={(e) => void submit(e)}>

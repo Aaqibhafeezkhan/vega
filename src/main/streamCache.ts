@@ -127,12 +127,13 @@ export class StreamCache {
     const res = await this.fetchImpl(url)
     const type = res.headers.get('content-type') ?? ''
     const len = Number(res.headers.get('content-length') ?? 0)
-    if (!res.ok || !res.body || !(type.startsWith('audio/') || type === 'application/octet-stream') || len > MAX_FILE_BYTES) return
+    // live radio and other unbounded streams have no content-length: never try to download those
+    if (!res.ok || !res.body || !(type.startsWith('audio/') || type === 'application/octet-stream') || !len || len > MAX_FILE_BYTES) return
     const part = `${this.bin(key)}.part`
     try {
       await pipeline(Readable.fromWeb(res.body as never), createWriteStream(part))
       const size = (await stat(part)).size
-      if (size === 0 || size > MAX_FILE_BYTES || (len && size !== len)) throw new Error('incomplete download')
+      if (size === 0 || size > MAX_FILE_BYTES || size !== len) throw new Error('incomplete download')
       await writeFile(this.meta(key), JSON.stringify({ contentType: type, size } satisfies Meta))
       await rename(part, this.bin(key))
       await this.evict()
