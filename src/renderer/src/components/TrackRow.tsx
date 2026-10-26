@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { refKey, type Track } from '@shared/types'
 import { fmtTime } from '@/lib/format'
+import { canSaveOffline, isSavedOffline, removeOffline, saveOffline } from '@/lib/offline'
 import { radioFrom } from '@/lib/recommender'
 import { warmOnHover } from '@/lib/sources'
 import { useLibrary } from '@/store/library'
@@ -69,6 +70,12 @@ function TrackMenu({ track, extra, close }: { track: Track; extra?: Props['extra
   const toast = useUi((s) => s.toast)
   const { playNext, enqueue } = usePlayer.getState()
   const ref = useRef<HTMLDivElement>(null)
+  const [saved, setSaved] = useState<boolean | null>(null)
+  const offlineOk = canSaveOffline(track)
+
+  useEffect(() => {
+    if (offlineOk) void isSavedOffline(track).then(setSaved)
+  }, [offlineOk, track])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -113,6 +120,18 @@ function TrackMenu({ track, extra, close }: { track: Track; extra?: Props['extra
           toast('Building your radio…')
           void radioFrom(track).then((t) => usePlayer.getState().playTracks(t))
         })}
+        {offlineOk &&
+          saved !== null &&
+          item(saved ? 'Remove offline copy' : 'Save for offline', 'download', () => {
+            if (saved) void removeOffline(track).then(() => toast('Removed offline copy'))
+            else {
+              toast('Saving…')
+              void saveOffline(track).then(
+                () => toast('Saved for offline', 'ok'),
+                (e: Error) => toast(e.message, 'error')
+              )
+            }
+          })}
         <div className="menu-sep">Add to playlist</div>
         {playlists.map((p) =>
           item(p.name, 'plus', () => {

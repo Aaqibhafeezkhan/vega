@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { UpdateState } from '@shared/ipc'
 import { Icon } from '@/components/Icon'
 import { load, save } from '@/lib/persist'
+import { clearOffline, offlineStats } from '@/lib/offline'
 import { pingsEnabled, setPingsEnabled } from '@/lib/trending'
 import { useAuth } from '@/store/auth'
 import { useUi } from '@/store/ui'
@@ -14,6 +15,32 @@ const SHORTCUTS: [string, string][] = [
   ['Ctrl + ← / →', 'Previous / next track'],
   ['Esc', 'Close panels and menus']
 ]
+
+function OfflinePanel() {
+  const [s, setS] = useState({ count: 0, bytes: 0 })
+  useEffect(() => {
+    void offlineStats().then(setS)
+  }, [])
+  return (
+    <div className="panel toggle-row">
+      <div className="grow">
+        <div className="row-title">Offline songs on this device</div>
+        <div className="row-sub">
+          {s.count ? `${s.count} saved · ${(s.bytes / 1048576).toFixed(0)} MB.` : 'None yet.'} Use "Save for offline" in a song's menu (Audius, Jamendo and Internet Archive tracks). Copies stay on this device only.
+        </div>
+      </div>
+      <button
+        className="pill ghost"
+        disabled={!s.count}
+        onClick={() => {
+          void clearOffline().then(() => setS({ count: 0, bytes: 0 }))
+        }}
+      >
+        Clear
+      </button>
+    </div>
+  )
+}
 
 function PrivacyPanel() {
   const [on, setOn] = useState(pingsEnabled)
@@ -151,6 +178,7 @@ export function Settings() {
       </div>
 
       <PrivacyPanel />
+      {!window.vega && <OfflinePanel />}
 
       <div className="panel toggle-row">
         <div className="grow">

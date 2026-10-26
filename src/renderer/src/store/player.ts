@@ -1,8 +1,10 @@
 import { create } from 'zustand'
+import type { StreamSource } from '@shared/provider'
 import type { Track } from '@shared/types'
 import { backend } from '@/lib/backend'
 import { sources } from '@/lib/sources'
 import { load, save } from '@/lib/persist'
+import { offlineUrl } from '@/lib/offline'
 import { pingPlay } from '@/lib/trending'
 import { ytEmbed } from '@/lib/ytEmbed'
 import { useLibrary } from './library'
@@ -67,6 +69,7 @@ function shuffled<T>(arr: T[]): T[] {
 }
 
 let loadToken = 0
+let savedUrl: string | null = null
 let embedTimer: ReturnType<typeof setInterval> | null = null
 
 /** Live playback position in ms (the store value only updates on timeupdate, ~4 Hz). */
@@ -87,7 +90,10 @@ export const usePlayer = create<PlayerState>((set, get) => {
     const token = ++loadToken
     set({ loading: true, error: null, positionMs: 0, durationMs: track.durationMs })
     try {
-      const { stream } = await sources.resolve(track, get().queue)
+      const saved = await offlineUrl(track).catch(() => null)
+      if (savedUrl) URL.revokeObjectURL(savedUrl)
+      savedUrl = saved
+      const stream: StreamSource = saved ? { kind: 'url', url: saved } : (await sources.resolve(track, get().queue)).stream
       if (token !== loadToken) return
       if (stream.kind === 'embed') {
         audio.pause()

@@ -1,6 +1,6 @@
 # Vega web: full catalogue + popularity-driven cache
 
-Status: APPROVED. W1 built (api/ytm, ytm web provider, embedded player). W2-W4 pending.
+Status: APPROVED. W1 built (api/ytm, ytm web provider, embedded player). W2 built (anonymous play counts + trending). W3 built as offline saves on the user device (licensed sources only); the server-side audio mirror was dropped: Audius/Jamendo/Archive already serve from fast CDNs and mirroring adds cost without benefit. W4 hardening pending.
 
 ## 1. Goals
 
