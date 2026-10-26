@@ -58,6 +58,7 @@ class PlaybackService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(NotificationChannel(CHANNEL, "Now playing", NotificationManager.IMPORTANCE_LOW).apply { setShowBadge(false) })
         session = MediaSessionCompat(this, "Vega").apply {
@@ -82,7 +83,11 @@ class PlaybackService : Service() {
                 if (cmd == "play") goForeground()
                 send(cmd)
             }
-            ACTION_STOP -> stopAll()
+            ACTION_STOP -> {
+                // the user dismissed the paused notification: make sure the page is silent, then let everything go
+                send("pause")
+                stopAll()
+            }
             else -> refresh()
         }
         return START_NOT_STICKY
@@ -119,6 +124,8 @@ class PlaybackService : Service() {
                 .build()
         )
         setLocks(n.playing)
+        main.removeCallbacks(idleStop)
+        if (!n.playing) main.postDelayed(idleStop, IDLE_STOP_MS)
         val notification = buildNotification(n)
         if (n.playing) {
             goForeground(notification)
@@ -202,16 +209,25 @@ class PlaybackService : Service() {
         }
     }
 
+    /** Paused for a long time: nobody is listening, so release the notification, the locks and (without a screen) the WebView. */
+    private val idleStop = Runnable {
+        send("pause")
+        stopAll()
+    }
+
     private fun stopAll() {
+        main.removeCallbacks(idleStop)
         setLocks(false)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         inForeground = false
         stopSelf()
+        VegaWeb.releaseIfIdle()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        // the page (and the audio) lives in the activity: when the user swipes the app away there is nothing left to control
-        stopAll()
+        // Swiped away from Recents: the WebView lives in VegaWeb, so a playing track keeps playing (this service holds the
+        // process). Paused: nothing to keep.
+        if (!now.playing) stopAll()
     }
 
     override fun onDestroy() {
@@ -219,21 +235,27 @@ class PlaybackService : Service() {
         session.isActive = false
         session.release()
         io.shutdownNow()
+        main.removeCallbacks(idleStop)
+        if (instance === this) instance = null
         super.onDestroy()
     }
 
     companion object {
         private const val CHANNEL = "now-playing"
         private const val ID = 1
+        private const val IDLE_STOP_MS = 15 * 60 * 1000L
         private const val ACTION_COMMAND = "dev.vega.android.COMMAND"
         private const val ACTION_STOP = "dev.vega.android.STOP"
 
         @Volatile var now = NowPlaying()
+        @Volatile private var instance: PlaybackService? = null
         @Volatile var commandSink: ((String, Long) -> Unit)? = null
 
         /** Called with every state push from the page. Starts the service on the first track; afterwards just refreshes it. */
         fun update(ctx: Context, n: NowPlaying) {
             now = n
+            // already running (typical with the app in the background): refresh directly, no service start needed
+            instance?.let { svc -> svc.main.post { svc.refresh() }; return }
             val i = Intent(ctx, PlaybackService::class.java)
             try {
                 when {

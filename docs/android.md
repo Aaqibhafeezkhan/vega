@@ -23,7 +23,9 @@ Bridge (only on Vega's origin, never inside the YouTube iframe; implemented with
 - page -> native: `window.vegaAndroid.postMessage(json)` with `{type:'state', has, playing, title, artist, album, art, durationMs, positionMs}` (`src/renderer/src/lib/androidBridge.ts`, driven by `usePlayer`)
 - native -> page: `window.__vegaAndroid.command('play'|'pause'|'next'|'prev'|'seek', ms)` and `window.__vegaAndroid.back()` (closes the topmost overlay or goes back a page; returns `false` when nothing is left, then the app moves to the background and keeps playing)
 
-Limits: swiping Vega away from Recents stops playback (the player lives in the activity). If a phone's battery saver kills background apps, exempt Vega in system battery settings.
+**Closing the app:** the WebView is a process-wide singleton (`VegaWeb.kt`) created with a `MutableContextWrapper`; the activity only attaches/detaches it. Swiping Vega away from Recents destroys the activity, but while a track plays the foreground service (`stopWithTask="false"`) keeps the process and the detached WebView, so the music continues and the notification controls still work. Reopening the app re-attaches the same page with playback intact. Everything is released when playback is paused and the app is closed (swipe while paused), when the paused notification is dismissed, or after 15 minutes paused.
+
+Limits: the system or an aggressive battery saver (some OEMs kill the process on swipe regardless of foreground services) can still end playback; exempt Vega in the phone's battery settings. Android's "Force stop" always stops it.
 
 ## Build
 
@@ -53,10 +55,11 @@ Debug builds allow cleartext only to `10.0.2.2` / `localhost`. Point at another 
 
 ## Layout
 
-- `MainActivity.kt` WebView, edge-to-edge insets (dark bars), back button, external links to the browser, offline page, notification permission
+- `VegaWeb.kt` the retained WebView: settings, bridge, external links to the browser, offline page
+- `MainActivity.kt` edge-to-edge insets (dark bars), back button, notification permission, attaches `VegaWeb`
 - `PlaybackService.kt` foreground service, MediaSession, notification, wake/Wi-Fi locks
 - icons: `scripts/make-android-icons.py` (from `build/icon.png`); the splash is the Android 12 system splash with the star on the app colour
 
 ## Verified
 
-On an Android 17 x86_64 emulator: page loads edge-to-edge with the phone layout, status bar matches the theme, the bridge appears on Vega's origin, a state push starts a `mediaPlayback` foreground service with a media notification (cover, progress, 3 controls), it stays alive with Home pressed and the screen off (wake lock held), notification buttons arrive in the page as commands, and Back goes to the home screen without stopping the app. Not verified on the emulator: actual YouTube audio output while locked (the emulator's network and CPU were too slow to play a video reliably). Check on a real phone before announcing it.
+On an Android 17 x86_64 emulator: page loads edge-to-edge with the phone layout, status bar matches the theme, the bridge appears on Vega's origin, a state push starts a `mediaPlayback` foreground service with a media notification (cover, progress, 3 controls), it stays alive with Home pressed and the screen off (wake lock held), notification buttons arrive in the page as commands, and Back goes to the home screen without stopping the app. Swiping the task away (`am stack remove`) while playing keeps the process, service and page alive and reopening re-attaches the same page; swiping while paused stops the service and releases the WebView. Not verified on the emulator: actual YouTube audio output while locked (the emulator's network and CPU were too slow to play a video reliably). Check on a real phone before announcing it.
