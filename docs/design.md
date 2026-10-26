@@ -275,7 +275,7 @@ docs/          design, ADRs, provider notes
 | **M5 (done)** | Metadata + recommendations v2: MusicBrainz artist genres (cached, 1 req/s), Last.fm similar artists (optional key), session co-listening, radio from any track, smart playlists (synced), search ranking. Cover Art Archive enrichment deferred | Daily Mix and Discover use real tags; smart playlists update live |
 | **M6 (done)** | Lyra's real player UI inside Vega (vendored in `lyra/`): backdrop and video backgrounds, synced and word-by-word lyrics, karaoke, themes/settings, wrong-lyrics picker, per-song offset. Runs in a same-origin iframe against a Vega-backed `window.lyra` bridge (same pattern as Lyra's Android build) | Lyra's player follows Vega's playback and controls it. Not ported: Spotify, window modes/widgets, studio video export, jam/nearby |
 | **M7 (done)** | Live radio (radio-browser), 10-band equalizer (desktop), opt-in YouTube sources (yt-dlp with verified install, Piped with failover; desktop), Windows installer (electron-builder, NSIS) + release workflow, premium UI redesign (Starlight design system, adaptive colour, command palette) | `npm run dist` builds `release/Vega-Setup-<version>.exe`; pushing a `v*` tag publishes it via GitHub Actions |
-| M8 | Android shell | Parity |
+| **M8 (done)** | Android shell: WebView around the hosted web app, foreground service + media session for background audio (see `docs/android.md`) | Debug APK builds locally; real-device audio check pending |
 
 ## 15. Risks & revisit list
 

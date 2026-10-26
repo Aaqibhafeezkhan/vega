@@ -13,7 +13,7 @@ val vegaVersionCode = vegaVersion.split(".").map { it.toInt() }.let { (a, b, c) 
 
 // The WebView loads the hosted web app, so the relative /api calls, the CSP and the YouTube embed behave exactly as in a
 // browser. Override for a staging deployment: ./gradlew assembleDebug -PvegaUrl=https://my-preview.vercel.app
-val vegaUrl = (project.findProperty("vegaUrl") as String?) ?: "https://vega-psi-lac.vercel.app"
+val vegaUrl = (project.findProperty("vegaUrl") as String?) ?: "https://vega-musicv1.vercel.app"
 
 // Release signing comes from the environment (CI). Without it the release build falls back to the debug key.
 val keystorePath: String? = System.getenv("VEGA_KEYSTORE")

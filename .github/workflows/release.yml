@@ -25,3 +25,36 @@ jobs:
         run: |
           # latest.yml + blockmap are what the installed app reads to auto-update
           gh release create "${{ github.ref_name }}" release/Vega-Setup-*.exe release/Vega-Setup-*.exe.blockmap release/latest.yml --generate-notes --title "Vega ${{ github.ref_name }}"
+
+
+  android:
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Build the APK
+        # Signed with the release key when the VEGA_KEYSTORE* secrets exist; otherwise with the debug key (still installable).
+        env:
+          VEGA_KEYSTORE_B64: ${{ secrets.VEGA_KEYSTORE_B64 }}
+          VEGA_KEYSTORE_PASSWORD: ${{ secrets.VEGA_KEYSTORE_PASSWORD }}
+          VEGA_KEY_ALIAS: ${{ secrets.VEGA_KEY_ALIAS }}
+          VEGA_KEY_PASSWORD: ${{ secrets.VEGA_KEY_PASSWORD }}
+        run: |
+          if [ -n "$VEGA_KEYSTORE_B64" ]; then
+            echo "$VEGA_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/vega.jks"
+            export VEGA_KEYSTORE="$RUNNER_TEMP/vega.jks"
+          fi
+          cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - name: Attach the APK to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "Vega-${{ github.ref_name }}.apk"
+          gh release upload "${{ github.ref_name }}" "Vega-${{ github.ref_name }}.apk" --clobber

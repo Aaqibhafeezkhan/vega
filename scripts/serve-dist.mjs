@@ -20,4 +20,4 @@ createServer(async (req, res) => {
   } catch {
     res.writeHead(404).end('not found')
   }
-}).listen(Number(process.argv[2] ?? 5180), '127.0.0.1', () => console.log('serving dist-web on', process.argv[2] ?? 5180))
+}).listen(Number(process.argv[2] ?? 5180), process.env.HOST ?? '127.0.0.1', () => console.log('serving dist-web on', process.argv[2] ?? 5180))

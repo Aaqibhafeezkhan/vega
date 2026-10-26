@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
             override fun shouldOverrideUrlLoading(v: WebView, request: WebResourceRequest): Boolean {
                 if (!request.isForMainFrame) return false
                 val u = request.url
-                if (u.scheme == "https" && "${u.scheme}://${u.authority}" == origin) return false
+                if ("${u.scheme}://${u.authority}" == origin) return false
                 if (u.scheme == "https" || u.scheme == "http" || u.scheme == "mailto") {
                     try { startActivity(Intent(Intent.ACTION_VIEW, u)) } catch (_: Exception) { }
                 }
