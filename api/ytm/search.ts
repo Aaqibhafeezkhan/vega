@@ -1,3 +1,4 @@
+import { dataApiSearch } from './_dataApi'
 import { CACHE_SEARCH, node, ytm, type Result } from './_shared'
 
 export async function run(url: URL): Promise<Result> {
@@ -7,6 +8,14 @@ export async function run(url: URL): Promise<Result> {
   try {
     return { status: 200, body: { songs: await ytm.search(q, limit) }, cache: CACHE_SEARCH }
   } catch {
+    const key = process.env.YT_API_KEY
+    if (key) {
+      try {
+        return { status: 200, body: { songs: await dataApiSearch(q, limit, key) }, cache: CACHE_SEARCH }
+      } catch {
+        /* fall through */
+      }
+    }
     return { status: 502, body: { error: 'upstream' } }
   }
 }

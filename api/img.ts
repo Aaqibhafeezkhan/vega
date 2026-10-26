@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { limited } from './_limit'
 
 /** Same-origin artwork proxy: YouTube's image hosts block cross-origin reads, which the player needs for its colour theme. */
 const HOSTS = /^(yt3|lh3|lh4|lh5|lh6)\.googleusercontent\.com$|^i\d?\.ytimg\.com$/
@@ -13,6 +14,11 @@ export const allowed = (raw: string): URL | null => {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (limited(req, 'img', 400)) {
+    res.statusCode = 429
+    res.end('slow down')
+    return
+  }
   const target = allowed(new URL(req.url ?? '/', 'http://localhost').searchParams.get('u') ?? '')
   if (!target) {
     res.statusCode = 400

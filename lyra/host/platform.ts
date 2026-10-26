@@ -133,7 +133,11 @@ export function setAppVersion(v: string): void {
 
 export function installBrowserPlatform(): void {
   const platform: CorePlatform = {
-    fetch: (url, init) => fetch(url, init),
+    // On the web LRCLIB goes through Vega's edge-cached /api/lrclib (shared cache, no per-browser rate limit)
+    fetch: (url, init) => {
+      const viaApi = !(window.parent as unknown as { vega?: unknown })?.vega && url.startsWith('https://lrclib.net/api/')
+      return viaApi ? fetch(`/api/lrclib?p=${encodeURIComponent(url.slice('https://lrclib.net/api'.length))}`, { signal: init?.signal }) : fetch(url, init)
+    },
     store: (name, defaults) => new LocalStore(name, defaults),
     blobCache: (name, max) => new LocalBlobCache(name, max),
     secret: secretStore,

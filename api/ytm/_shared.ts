@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { limited } from '../_limit'
 import { YtMusic } from '../../src/main/ytmusic'
 
 /** One YtMusic per warm function instance; its in-memory cache sits behind the CDN cache set by the handlers. */
@@ -14,8 +15,14 @@ export interface Result {
 }
 
 /** Adapts a pure `(url) => Result` function to a Vercel Node function. */
-export function node(run: (url: URL) => Promise<Result>) {
+export function node(run: (url: URL) => Promise<Result>, bucket = 'ytm', max = 60) {
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    if (limited(req, bucket, max)) {
+      res.statusCode = 429
+      res.setHeader('Retry-After', '30')
+      res.end(JSON.stringify({ error: 'rate-limited' }))
+      return
+    }
     const out = await run(new URL(req.url ?? '/', 'http://localhost')).catch((): Result => ({ status: 500, body: { error: 'internal' } }))
     res.statusCode = out.status
     res.setHeader('Content-Type', 'application/json; charset=utf-8')

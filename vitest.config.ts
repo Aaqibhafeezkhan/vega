@@ -9,5 +9,5 @@ export default defineConfig({
       '@': resolve(__dirname, 'src/renderer/src')
     }
   },
-  test: { include: ['src/**/*.test.ts'] }
+  test: { include: ['src/**/*.test.ts', 'api/**/*.test.ts'] }
 })

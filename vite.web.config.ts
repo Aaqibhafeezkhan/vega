@@ -9,8 +9,8 @@ function devApi(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost')
-        if (url.pathname === '/api/img') {
-          const mod = (await server.ssrLoadModule('/../../api/img.ts')) as { default: (q: typeof req, r: typeof res) => Promise<void> }
+        if (url.pathname === '/api/img' || url.pathname === '/api/lrclib') {
+          const mod = (await server.ssrLoadModule(`/../../api${url.pathname.slice(4)}.ts`)) as { default: (q: typeof req, r: typeof res) => Promise<void> }
           return mod.default(req, res)
         }
         const m = /^\/api\/(ytm)\/(search|shelves)$/.exec(url.pathname)
