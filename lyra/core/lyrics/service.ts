@@ -187,7 +187,8 @@ class LyricsService {
         log.warn(`${provider.id} failed`, (e as Error).message)
       }
     }
-    if (!answered && firstError) {
+    // A provider that failed (rate limit, outage) did not say "no lyrics": report a retryable error and never cache it as none.
+    if (firstError && (!answered || firstError.retryable)) {
       return {
         trackId: track.id,
         status: 'error',

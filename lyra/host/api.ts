@@ -116,7 +116,9 @@ async function artDataUrl(url: string): Promise<string | null> {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.decoding = 'async'
-    img.src = url
+    // On the web, YouTube's image hosts refuse cross-origin reads: go through Vega's same-origin /api/img proxy.
+    const viaProxy = !(window.parent as unknown as { vega?: unknown })?.vega && /^https:\/\/((yt3|lh[3-6])\.googleusercontent\.com|i\d?\.ytimg\.com)\//.test(url)
+    img.src = viaProxy ? `/api/img?u=${encodeURIComponent(url)}` : url
     await img.decode()
     const size = 640
     const scale = Math.min(1, size / Math.max(img.naturalWidth, img.naturalHeight))
