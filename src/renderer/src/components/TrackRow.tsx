@@ -6,7 +6,7 @@ import { usePlayer } from '@/store/player'
 import { Cover } from './Cover'
 import { Icon } from './Icon'
 
-const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo' }
+const SOURCE_LABEL: Record<string, string> = { audius: 'Audius', jamendo: 'Jamendo', archive: 'Archive' }
 
 interface Props {
   track: Track

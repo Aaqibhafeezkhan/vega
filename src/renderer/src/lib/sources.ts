@@ -3,6 +3,7 @@ import { createMockProvider } from '@providers/mock'
 import { createLocalProvider } from '@providers/local'
 import { createAudiusProvider } from '@providers/audius'
 import { createJamendoProvider } from '@providers/jamendo'
+import { createArchiveProvider } from '@providers/archive'
 import { backend } from './backend'
 
 /**
@@ -24,7 +25,9 @@ export function setDemoEnabled(on: boolean): void {
 }
 
 /** Registers/unregisters online providers to match settings. Jamendo only exists once the user supplies a client id. */
-export function applyOnlineSources(cfg: { audius: boolean; jamendoClientId: string }): void {
+export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; jamendoClientId: string }): void {
+  if (cfg.archive) sources.register(createArchiveProvider(), 55)
+  else sources.unregister('archive')
   if (cfg.audius) sources.register(createAudiusProvider(), 50)
   else sources.unregister('audius')
   if (cfg.jamendoClientId) sources.register(createJamendoProvider({ clientId: cfg.jamendoClientId }), 60)

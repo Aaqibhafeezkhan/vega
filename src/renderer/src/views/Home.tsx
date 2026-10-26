@@ -17,7 +17,7 @@ export function Home() {
   const events = useLibrary((s) => s.events)
   const seed = useLibrary((s) => s.seedDemoHistory)
   const catalog = useCatalog((s) => s.tracks)
-  const online = useOnline((s) => `${s.audius}|${s.jamendoClientId}`)
+  const online = useOnline((s) => `${s.audius}|${s.archive}|${s.jamendoClientId}`)
   const demo = useCatalog((s) => s.demo)
   const [shelves, setShelves] = useState<ShelfData[]>([])
 

@@ -1,6 +1,13 @@
 import type { VegaDesktopApi } from '@shared/ipc'
 import type { LibraryBackend } from '@shared/library'
 
+const toBase64Url = (s: string): string => {
+  const bytes = new TextEncoder().encode(s)
+  let bin = ''
+  bytes.forEach((b) => (bin += String.fromCharCode(b)))
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
 /** Desktop backend: thin adapter over the preload IPC bridge (SQLite lives in the main process). */
 export function createDesktopBackend(api: VegaDesktopApi): LibraryBackend {
   return {
@@ -15,6 +22,7 @@ export function createDesktopBackend(api: VegaDesktopApi): LibraryBackend {
     all: (limit) => api.library.all(limit),
     getTrack: (id) => api.library.getTrack(id),
     streamUrl: async (id) => `vega-media://file/${encodeURIComponent(id)}`,
+    proxyStream: (url) => (/^https:\/\//.test(url) ? `vega-media://stream/${toBase64Url(url)}` : url),
     kvGetAll: () => api.kv.getAll(),
     kvSet: (key, value) => api.kv.set(key, value)
   }

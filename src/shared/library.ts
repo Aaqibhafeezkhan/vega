@@ -44,6 +44,8 @@ export interface LibraryBackend {
   getTrack(id: string): Promise<Track | null>
   /** A URL an <audio> element can play. Web returns an object URL, desktop a vega-media:// URL. */
   streamUrl(id: string): Promise<string>
+  /** Desktop only: routes an online stream URL through the main-process disk cache. */
+  proxyStream?(url: string): string
   /** Small durable key/value store for app state (likes, playlists, play history). */
   kvGetAll(): Promise<Record<string, string>>
   kvSet(key: string, value: string): Promise<void>

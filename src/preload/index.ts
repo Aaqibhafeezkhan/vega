@@ -20,6 +20,11 @@ const api: VegaDesktopApi = {
       return () => ipcRenderer.removeListener(EV.scanProgress, l)
     }
   },
+  cache: {
+    stats: () => invoke(CH.cacheStats),
+    clear: () => invoke(CH.cacheClear),
+    setMaxMb: (mb) => invoke(CH.cacheSetMax, mb)
+  },
   kv: {
     getAll: () => invoke(CH.kvGetAll),
     set: (key, value) => invoke(CH.kvSet, key, value)

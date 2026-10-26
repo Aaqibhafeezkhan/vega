@@ -5,9 +5,11 @@ import { CH, EV, MEDIA_SCHEME } from '@shared/ipc'
 import type { ScanProgress } from '@shared/library'
 import { LibraryDb, rowToTrack } from './db'
 import { scanFolder } from './scanner'
+import { DEFAULT_MAX_MB, StreamCache, decodeStreamUrl, isAllowedStreamUrl } from './streamCache'
 
 let db: LibraryDb
 let artDir = ''
+let cache: StreamCache
 const scanning = new Set<number>()
 
 /** Must run before app is ready: lets the renderer stream <audio> from vega-media:// with Range support. */
@@ -38,10 +40,24 @@ export function initLibrary(): void {
   db = new LibraryDb(join(data, 'vega.db'))
   artDir = join(data, 'art')
 
+  const maxMb = Number(JSON.parse(db.kvGetAll()['cache.maxMb'] ?? 'null')) || DEFAULT_MAX_MB
+  cache = new StreamCache(join(data, 'stream-cache'), maxMb * 1024 * 1024, (u) => net.fetch(u))
+  void cache.evict()
+
   // vega-media://file/<trackId>  -> the audio file;  vega-media://art/<file> -> cached cover
-  protocol.handle(MEDIA_SCHEME, (req) => {
+  // vega-media://stream/<base64url(https url)> -> online stream, played from the disk cache when present
+  protocol.handle(MEDIA_SCHEME, async (req) => {
     const url = new URL(req.url)
     const target = decodeURIComponent(url.pathname.replace(/^\//, ''))
+    if (url.hostname === 'stream') {
+      const remote = decodeStreamUrl(target)
+      if (!isAllowedStreamUrl(remote)) return new Response('forbidden', { status: 403 })
+      const hit = await cache.lookup(remote)
+      if (hit) return cache.serve(hit.path, hit.meta, req.headers.get('range'))
+      void cache.fill(remote) // warm the cache for next time; this play is proxied straight through
+      const range = req.headers.get('range')
+      return net.fetch(remote, { headers: range ? { range } : {} })
+    }
     let path: string | undefined
     if (url.hostname === 'file') path = db.pathOf(target)
     else if (url.hostname === 'art' && /^[0-9a-f]+\.(jpg|png)$/.test(target)) path = join(artDir, target)
@@ -74,6 +90,14 @@ export function initLibrary(): void {
   ipcMain.handle(CH.getTrack, (_e, id: string) => {
     const r = db.getTrack(String(id))
     return r ? rowToTrack(r) : null
+  })
+  ipcMain.handle(CH.cacheStats, () => cache.stats())
+  ipcMain.handle(CH.cacheClear, () => cache.clear())
+  ipcMain.handle(CH.cacheSetMax, (_e, mb: number) => {
+    const n = Math.min(100_000, Math.max(50, Math.round(Number(mb)) || DEFAULT_MAX_MB))
+    db.kvSet('cache.maxMb', JSON.stringify(n))
+    cache.setMaxBytes(n * 1024 * 1024)
+    return n
   })
   ipcMain.handle(CH.kvGetAll, () => db.kvGetAll())
   ipcMain.handle(CH.kvSet, (_e, key: string, value: string) => db.kvSet(String(key), String(value)))

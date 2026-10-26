@@ -196,3 +196,5 @@ code { background: rgba(255, 255, 255, 0.08); padding: 1px 5px; border-radius: 4
 .avatar.sync-synced { border-color: #4ade80; }
 .avatar.sync-syncing { border-color: var(--accent-2); }
 .avatar.sync-error { border-color: #ff7a7a; }
+
+.narrow-select { width: 110px; }

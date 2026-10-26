@@ -11,7 +11,10 @@ export const CH = {
   all: 'library:all',
   getTrack: 'library:getTrack',
   kvGetAll: 'kv:getAll',
-  kvSet: 'kv:set'
+  kvSet: 'kv:set',
+  cacheStats: 'cache:stats',
+  cacheClear: 'cache:clear',
+  cacheSetMax: 'cache:setMax'
 } as const
 
 export const EV = {
@@ -29,6 +32,11 @@ export interface VegaDesktopApi {
     all(limit: number): Promise<Track[]>
     getTrack(id: string): Promise<Track | null>
     onScanProgress(cb: (p: ScanProgress) => void): () => void
+  }
+  cache: {
+    stats(): Promise<{ bytes: number; files: number; maxBytes: number }>
+    clear(): Promise<void>
+    setMaxMb(mb: number): Promise<number>
   }
   kv: {
     getAll(): Promise<Record<string, string>>

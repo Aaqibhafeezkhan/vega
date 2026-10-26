@@ -10,6 +10,47 @@ function ago(ts: number | null): string {
   return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`
 }
 
+function fmtBytes(n: number): string {
+  return n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : n < 1024 ** 3 ? `${(n / 1024 / 1024).toFixed(0)} MB` : `${(n / 1024 ** 3).toFixed(2)} GB`
+}
+
+function CachePanel() {
+  const api = window.vega?.cache
+  const [stats, setStats] = useState<{ bytes: number; files: number; maxBytes: number } | null>(null)
+  const refresh = useCallback(() => void api?.stats().then(setStats), [api])
+  useEffect(() => {
+    refresh()
+    const t = setInterval(refresh, 5000)
+    return () => clearInterval(t)
+  }, [refresh])
+  if (!api || !stats) return null
+  return (
+    <div className="panel toggle-row">
+      <div className="grow">
+        <div className="row-title">Offline cache</div>
+        <div className="row-sub">
+          Songs you stream are saved here so they replay instantly and work offline. {stats.files} songs · {fmtBytes(stats.bytes)} of {fmtBytes(stats.maxBytes)}
+        </div>
+      </div>
+      <select
+        className="key-input narrow-select"
+        value={Math.round(stats.maxBytes / 1024 / 1024)}
+        onChange={(e) => void api.setMaxMb(Number(e.target.value)).then(refresh)}
+        aria-label="Cache size limit"
+      >
+        {[512, 1024, 2048, 5120, 10240].map((mb) => (
+          <option key={mb} value={mb}>
+            {fmtBytes(mb * 1024 * 1024)}
+          </option>
+        ))}
+      </select>
+      <button className="pill ghost" onClick={() => void api.clear().then(refresh)}>
+        Clear
+      </button>
+    </div>
+  )
+}
+
 export function Sources() {
   const [folders, setFolders] = useState<FolderInfo[]>([])
   const [progress, setProgress] = useState<Record<string, ScanProgress>>({})
@@ -40,6 +81,16 @@ export function Sources() {
         </div>
         <label className="switch">
           <input type="checkbox" checked={online.audius} onChange={(e) => online.setAudius(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="panel toggle-row">
+        <div>
+          <div className="row-title">Internet Archive</div>
+          <div className="row-sub">Netlabels, 78rpm records, live recordings and open audio. No account or key needed.</div>
+        </div>
+        <label className="switch">
+          <input type="checkbox" checked={online.archive} onChange={(e) => online.setArchive(e.target.checked)} />
           <span />
         </label>
       </div>
@@ -156,6 +207,7 @@ export function Sources() {
       </div>
 
       {onlineSection}
+      <CachePanel />
 
       <div className="panel toggle-row">
         <div>

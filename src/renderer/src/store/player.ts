@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Track } from '@shared/types'
+import { backend } from '@/lib/backend'
 import { sources } from '@/lib/sources'
 import { load, save } from '@/lib/persist'
 import { useLibrary } from './library'
@@ -69,7 +70,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const { stream } = await sources.resolve(track, get().queue)
       if (token !== loadToken) return
       if (stream.kind !== 'url') throw new Error('file streams need the stream proxy (M2)')
-      audio.src = stream.url
+      audio.src = backend.proxyStream?.(stream.url) ?? stream.url
       await audio.play()
       if (token !== loadToken) return
       session = { track, startedAt: Date.now(), listenedMs: 0, lastTick: null }

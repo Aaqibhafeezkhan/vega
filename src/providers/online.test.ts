@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createAudiusProvider } from './audius'
 import { createJamendoProvider } from './jamendo'
+import { createArchiveProvider } from './archive'
 
 const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
@@ -75,5 +76,44 @@ describe('jamendo provider', () => {
     const p = createJamendoProvider({ clientId: 'bad', fetchImpl: f as unknown as typeof fetch })
     await expect(p.search('x', { kind: 'track', limit: 5 })).rejects.toThrow('Invalid client_id')
     expect(await p.health()).toBe('down')
+  })
+})
+
+describe('internet archive provider', () => {
+  const meta = {
+    metadata: { title: 'The LP', creator: 'ProleteR', year: '2012' },
+    files: [
+      { name: 'a.mp3', format: 'VBR MP3', title: 'First', length: '04:29', album: 'The EP' },
+      { name: 'b.mp3', format: 'VBR MP3', length: '65.5' },
+      { name: 'a_64kb.mp3', format: '64Kbps MP3', length: '04:29' },
+      { name: 'cover.jpg', format: 'JPEG' },
+      { name: 'zero.mp3', format: 'VBR MP3', length: '0' }
+    ]
+  }
+  const route = (url: string): Response =>
+    url.includes('advancedsearch') ? json({ response: { docs: [{ identifier: 'item1' }, { identifier: 'broken' }] } }) : url.includes('/metadata/item1') ? json(meta) : json({}, 500)
+
+  it('expands items into tracks, picks one mp3 flavour, skips broken items', async () => {
+    const f = vi.fn(async (u: unknown) => route(String(u)))
+    const p = createArchiveProvider({ fetchImpl: f as unknown as typeof fetch })
+    const { tracks } = await p.search('jazz', { kind: 'track', limit: 10 })
+    expect(tracks.map((t) => t.title)).toEqual(['First', 'b'])
+    expect(tracks[0]).toMatchObject({ ref: { source: 'archive', id: 'item1/a.mp3' }, artists: ['ProleteR'], album: 'The EP', durationMs: 269_000, year: 2012 })
+    expect(tracks[1]?.durationMs).toBe(65_500)
+    expect(String((f.mock.calls[0] as unknown[])[0])).toContain('mediatype%3Aaudio')
+  })
+
+  it('strips query operators from user input', async () => {
+    const f = vi.fn(async (u: unknown) => route(String(u)))
+    const p = createArchiveProvider({ fetchImpl: f as unknown as typeof fetch })
+    await p.search('jazz" OR collection:(*) ', { kind: 'track', limit: 5 })
+    const q = decodeURIComponent(String((f.mock.calls[0] as unknown[])[0]))
+    expect(q).not.toContain('"')
+    expect(q).toContain('AND+(jazz+collection)')
+  })
+
+  it('resolves to an encoded download url', async () => {
+    const p = createArchiveProvider({ fetchImpl: (async () => json({})) as unknown as typeof fetch })
+    expect(await p.resolve('item1/dir/My Song.mp3')).toMatchObject({ url: 'https://archive.org/download/item1/dir/My%20Song.mp3' })
   })
 })
