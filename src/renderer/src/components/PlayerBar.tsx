@@ -27,7 +27,7 @@ export function PlayerBar() {
       <div className="dock-left">
         {track ? (
           <>
-            <button className="dock-art" data-embed-slot="dock" onClick={() => togglePanel('lyrics')} aria-label="Show lyrics" title="Show lyrics">
+            <button className="dock-art" onClick={() => togglePanel('lyrics')} aria-label="Show lyrics" title="Show lyrics">
               <Cover track={track} size={60} radius={12} />
               <span className="dock-art-hover">
                 <Icon name="lyrics" size={18} />

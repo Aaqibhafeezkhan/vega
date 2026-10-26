@@ -36,7 +36,6 @@ export function QueuePanel() {
         </button>
       </div>
 
-      {panel === 'lyrics' && !window.vega && queue[index]?.ref.source === 'ytm' && <div className="embed-slot" data-embed-slot="panel" />}
       {panel === 'lyrics' && <iframe className="lyra-panel-frame" src="lyra/index.html?mode=mini" title="Lyra" allow="autoplay" />}
 
       {panel === 'queue' && !queue.length && (
