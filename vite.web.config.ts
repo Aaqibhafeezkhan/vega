@@ -1,6 +1,30 @@
 import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+
+/** Serves the Vercel functions in /api during `dev:web`, so search and shelves work without `vercel dev`. */
+function devApi(): Plugin {
+  return {
+    name: 'vega-dev-api',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = new URL(req.url ?? '/', 'http://localhost')
+        const m = /^\/api\/(ytm)\/(search|shelves)$/.exec(url.pathname)
+        if (!m) return next()
+        try {
+          const mod = (await server.ssrLoadModule(`/../../api/${m[1]}/${m[2]}.ts`)) as { GET: (r: Request) => Promise<Response> }
+          const out = await mod.GET(new Request(url))
+          res.statusCode = out.status
+          out.headers.forEach((v, k) => res.setHeader(k, v))
+          res.end(Buffer.from(await out.arrayBuffer()))
+        } catch (err) {
+          res.statusCode = 500
+          res.end(String(err))
+        }
+      })
+    }
+  }
+}
 
 // Renderer-only dev server (no Electron): `npm run dev:web`. Handy for UI work and browser testing.
 export default defineConfig({
@@ -14,7 +38,7 @@ export default defineConfig({
       '@': resolve(__dirname, 'src/renderer/src')
     }
   },
-  plugins: [react()],
+  plugins: [react(), devApi()],
   build: { outDir: resolve(__dirname, 'dist-web'), emptyOutDir: true },
-  server: { port: 5174, strictPort: true }
+  server: { port: 5174, strictPort: true, fs: { allow: [__dirname] } }
 })

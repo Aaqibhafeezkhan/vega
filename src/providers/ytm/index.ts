@@ -8,7 +8,7 @@ import type { Track } from '@shared/types'
  * and the next track is resolved ahead of time, so skipping feels instant.
  */
 
-interface Song {
+export interface Song {
   videoId: string
   title: string
   artists: string[]
@@ -17,10 +17,20 @@ interface Song {
   thumbnail?: string
 }
 
+export const songToTrack = (s: Song): Track => ({
+  ref: { source: 'ytm', id: s.videoId },
+  title: s.title,
+  artists: s.artists,
+  album: s.album,
+  durationMs: s.durationSec * 1000,
+  artworkUrl: s.thumbnail
+})
+
 export const YTM_LANGUAGES = ['Hindi', 'Punjabi', 'Tamil', 'Telugu', 'English', 'Bengali', 'Marathi'] as const
 export type YtmLanguage = (typeof YTM_LANGUAGES)[number]
 
 let language: YtmLanguage = 'Hindi'
+export const getYtmLanguage = (): YtmLanguage => language
 export function setYtmLanguage(l: YtmLanguage): void {
   language = l
 }
@@ -38,14 +48,7 @@ export function ytmShelves(lang: YtmLanguage): { id: string; title: string; quer
 }
 
 export function createYtmProvider(api: Pick<VegaDesktopApi, 'ytm' | 'ytdlp'>): SourceProvider {
-  const toTrack = (s: Song): Track => ({
-    ref: { source: 'ytm', id: s.videoId },
-    title: s.title,
-    artists: s.artists,
-    album: s.album,
-    durationMs: s.durationSec * 1000,
-    artworkUrl: s.thumbnail
-  })
+  const toTrack = songToTrack
 
   /** Fast catalogue search; if that endpoint is down, fall back to yt-dlp's own (slower) search. */
   async function find(q: string, limit: number): Promise<Track[]> {

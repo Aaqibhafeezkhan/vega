@@ -5,5 +5,5 @@
     "skipLibCheck": true, "esModuleInterop": true, "types": ["node"],
     "paths": { "@shared/*": ["./src/shared/*"], "@providers/*": ["./src/providers/*"] }
   },
-  "include": ["src/main/**/*", "src/preload/**/*", "electron.vite.config.ts", "vite.web.config.ts"]
+  "include": ["api/**/*", "src/main/**/*", "src/preload/**/*", "electron.vite.config.ts", "vite.web.config.ts"]
 }

@@ -3,6 +3,7 @@ import type { Track } from '@shared/types'
 import { backend } from '@/lib/backend'
 import { sources } from '@/lib/sources'
 import { load, save } from '@/lib/persist'
+import { ytEmbed } from '@/lib/ytEmbed'
 import { useLibrary } from './library'
 
 export type Repeat = 'off' | 'all' | 'one'
@@ -64,9 +65,18 @@ function shuffled<T>(arr: T[]): T[] {
 }
 
 let loadToken = 0
+let embedTimer: ReturnType<typeof setInterval> | null = null
 
 /** Live playback position in ms (the store value only updates on timeupdate, ~4 Hz). */
-export const getPosition = (): number => audio.currentTime * 1000
+export const getPosition = (): number => curTime() * 1000
+
+/** True while the current track plays in YouTube's embedded player (web) instead of the audio element. */
+let embedActive = false
+const curTime = (): number => (embedActive ? ytEmbed.time() : audio.currentTime)
+const setTime = (sec: number): void => {
+  if (embedActive) ytEmbed.seek(sec)
+  else audio.currentTime = sec
+}
 
 export const usePlayer = create<PlayerState>((set, get) => {
   const startCurrent = async (): Promise<void> => {
@@ -77,10 +87,26 @@ export const usePlayer = create<PlayerState>((set, get) => {
     try {
       const { stream } = await sources.resolve(track, get().queue)
       if (token !== loadToken) return
-      if (stream.kind !== 'url') throw new Error('file streams need the stream proxy (M2)')
-      audio.src = backend.proxyStream?.(stream.url) ?? stream.url
-      await audio.play()
-      if (token !== loadToken) return
+      if (stream.kind === 'embed') {
+        audio.pause()
+        audio.removeAttribute('src')
+        embedActive = true
+        await ytEmbed.load(stream.videoId)
+        if (token !== loadToken) return
+        ytEmbed.setVolume(get().volume)
+        embedTimer ??= setInterval(tick, 250)
+      } else {
+        if (stream.kind !== 'url') throw new Error('file streams need the stream proxy (M2)')
+        if (embedActive) {
+          embedActive = false
+          ytEmbed.stop()
+          if (embedTimer) clearInterval(embedTimer)
+          embedTimer = null
+        }
+        audio.src = backend.proxyStream?.(stream.url) ?? stream.url
+        await audio.play()
+        if (token !== loadToken) return
+      }
       session = { track, startedAt: Date.now(), listenedMs: 0, lastTick: null }
       set({ loading: false, playing: true })
       // resolve the next track in the background so skipping is instant
@@ -96,13 +122,41 @@ export const usePlayer = create<PlayerState>((set, get) => {
     }
   }
 
-  audio.addEventListener('timeupdate', () => {
+  const tick = (): void => {
     const now = performance.now()
     if (session) {
       if (session.lastTick !== null) session.listenedMs += Math.min(1000, now - session.lastTick)
       session.lastTick = now
     }
-    set({ positionMs: audio.currentTime * 1000 })
+    set({ positionMs: curTime() * 1000 })
+    if (embedActive) {
+      const d = ytEmbed.duration()
+      if (d > 0 && Math.abs(d * 1000 - get().durationMs) > 1500) set({ durationMs: d * 1000 })
+    }
+  }
+  audio.addEventListener('timeupdate', () => {
+    if (!embedActive) tick()
+  })
+  ytEmbed.setHandlers({
+    state: (s) => {
+      if (!embedActive) return
+      if (s === 'playing') set({ playing: true, loading: false })
+      else if (s === 'paused') {
+        if (session) session.lastTick = null
+        set({ playing: false })
+      } else if (s === 'ended') {
+        finishSession(false)
+        get().next(true)
+      }
+    },
+    error: () => {
+      if (!embedActive) return
+      const track = get().queue[get().index]
+      if (!track) return
+      const token = loadToken
+      set({ loading: false, playing: false, error: `Can't play "${track.title}"` })
+      if (get().queue.length > 1) setTimeout(() => token === loadToken && get().next(true), 1200)
+    }
   })
   audio.addEventListener('pause', () => {
     if (session) session.lastTick = null
@@ -163,7 +217,10 @@ export const usePlayer = create<PlayerState>((set, get) => {
     },
 
     togglePlay: () => {
-      if (audio.src && !audio.ended && get().index >= 0) {
+      if (embedActive && get().index >= 0) {
+        if (get().playing) ytEmbed.pause()
+        else ytEmbed.play()
+      } else if (audio.src && !audio.ended && get().index >= 0) {
         if (audio.paused) void audio.play()
         else audio.pause()
       } else if (get().queue.length) {
@@ -183,7 +240,10 @@ export const usePlayer = create<PlayerState>((set, get) => {
       if (last && repeat !== 'all') {
         if (!auto) return
         audio.pause()
-        audio.currentTime = 0
+        if (embedActive) {
+          ytEmbed.pause()
+          ytEmbed.seek(0)
+        } else audio.currentTime = 0
         set({ playing: false, positionMs: 0 })
         return
       }
@@ -193,8 +253,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
     },
 
     prev: () => {
-      if (audio.currentTime > 3 || get().index <= 0) {
-        audio.currentTime = 0
+      if (curTime() > 3 || get().index <= 0) {
+        setTime(0)
         return
       }
       finishSession(true)
@@ -203,12 +263,13 @@ export const usePlayer = create<PlayerState>((set, get) => {
     },
 
     seek: (ms) => {
-      audio.currentTime = ms / 1000
+      setTime(ms / 1000)
       set({ positionMs: ms })
     },
 
     setVolume: (v) => {
       audio.volume = v
+      ytEmbed.setVolume(v)
       set({ volume: v })
       save('volume', v)
     },

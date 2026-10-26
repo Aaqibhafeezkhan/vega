@@ -6,6 +6,7 @@ import { createJamendoProvider } from '@providers/jamendo'
 import { createArchiveProvider } from '@providers/archive'
 import { createRadioProvider } from '@providers/radio'
 import { createYtmProvider } from '@providers/ytm'
+import { createYtmWebProvider } from '@providers/ytm/web'
 import { backend } from './backend'
 
 /**
@@ -31,8 +32,8 @@ export function setDemoEnabled(on: boolean): void {
 
 /** Registers/unregisters online providers to match settings. Jamendo only exists once the user supplies a client id. */
 export function applyOnlineSources(cfg: { audius: boolean; archive: boolean; radio: boolean; ytm: boolean; jamendoClientId: string }): void {
-  // YouTube Music (desktop): the main catalogue, on by default
-  if (cfg.ytm && window.vega) sources.register(createYtmProvider(window.vega), 30)
+  // YouTube Music: the main catalogue, on by default (desktop: yt-dlp streams; web: /api search + embedded player)
+  if (cfg.ytm) sources.register(window.vega ? createYtmProvider(window.vega) : createYtmWebProvider(), 30)
   else sources.unregister('ytm')
   if (cfg.radio) sources.register(radio, 70)
   else sources.unregister('radio')

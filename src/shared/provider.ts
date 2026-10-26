@@ -15,6 +15,8 @@ export interface Shelf {
 export type StreamSource =
   | { kind: 'url'; url: string; headers?: Record<string, string>; expiresAt?: number; mime?: string }
   | { kind: 'file'; path: string }
+  /** Played by the source's own embedded player (web YouTube): the app drives it, the audio is not ours. */
+  | { kind: 'embed'; provider: 'youtube'; videoId: string }
 
 export type Health = 'ok' | 'degraded' | 'down'
 
