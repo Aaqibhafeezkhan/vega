@@ -44,3 +44,33 @@ export interface PlayEvent {
   counted: boolean
   skipped: boolean
 }
+
+// ---- Lyrics (ported from Lyra, shared/types.ts) ----
+
+export interface LyricWord {
+  timeMs: number
+  text: string
+}
+
+export interface LyricLine {
+  timeMs: number
+  text: string
+  /** Only present when the source supplied word-level timing. */
+  words?: LyricWord[]
+  /** When the last word ends (set for estimated timing so it does not stretch across a long gap). */
+  endMs?: number
+}
+
+export type LyricsStatus = 'synced' | 'plain' | 'instrumental' | 'none' | 'error'
+
+export interface LyricsResult {
+  trackKey: string
+  status: LyricsStatus
+  provider: string
+  lines: LyricLine[]
+  plain?: string
+  wordSynced?: boolean
+  /** What the provider matched, so the UI can reveal wrong matches. */
+  matched?: { title: string; artist: string; durationMs: number }
+  error?: { kind: 'network' | 'rate-limit' | 'server' | 'unknown'; message: string; retryable: boolean }
+}

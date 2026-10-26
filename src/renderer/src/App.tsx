@@ -13,13 +13,15 @@ import { Library } from './views/Library'
 import { PlaylistView } from './views/PlaylistView'
 import { Search } from './views/Search'
 import { Account } from './views/Account'
+import { NowPlaying } from './views/NowPlaying'
 import { SmartView } from './views/SmartView'
 import { Sources } from './views/Sources'
 import { Stats } from './views/Stats'
 
 export function App() {
   const view = useUi((s) => s.view)
-  const queueOpen = useUi((s) => s.queueOpen)
+  const panel = useUi((s) => s.panel)
+  const nowPlaying = useUi((s) => s.nowPlaying)
 
   useEffect(() => {
     void useCatalog.getState().refresh()
@@ -49,7 +51,7 @@ export function App() {
   }, [])
 
   return (
-    <div className={`app${queueOpen ? ' with-queue' : ''}`}>
+    <div className={`app${panel ? ' with-queue' : ''}`}>
       <Sidebar />
       <main className="main">
         {view.name === 'home' && <Home />}
@@ -61,8 +63,9 @@ export function App() {
         {view.name === 'playlist' && <PlaylistView id={view.id} />}
         {view.name === 'smart' && <SmartView id={view.id} key={view.id} />}
       </main>
-      {queueOpen && <QueuePanel />}
+      {panel && <QueuePanel />}
       <PlayerBar />
+      {nowPlaying && <NowPlaying />}
     </div>
   )
 }

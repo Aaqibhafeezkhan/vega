@@ -8,7 +8,7 @@ Live web version: https://vega-psi-lac.vercel.app
 
 Stack: Electron + React + TypeScript + Zustand (same as Lyra).
 
-## Status: milestone 5 (smarter recommendations on top of M1-M4)
+## Status: milestone 6 (synced lyrics and fullscreen player on top of M1-M5)
 
 Add a music folder under **Sources**: it is scanned (tags, duration, cover art) into SQLite on desktop or IndexedDB in the browser, searchable instantly, and played from disk. A built-in **demo provider** (fictional catalog) stays available. Online sources plug in behind the
 `SourceProvider` interface later: local files, Audius, Jamendo, Internet Archive, yt-dlp. See
@@ -19,6 +19,8 @@ Online: Audius works out of the box (no key). Jamendo needs a free client ID, pa
 Optional accounts (Supabase): sign in to sync likes, playlists and listening history across devices. Setup in [docs/supabase-setup.md](docs/supabase-setup.md); without credentials Vega stays fully local.
 
 Recommendations: genres learned from MusicBrainz, optional Last.fm similar artists, session co-listening, radio from any song, rule-based smart playlists.
+
+Lyrics: synced lyrics from LRCLIB (ported from Lyra) in the side panel, a fullscreen player with colours from the cover art, karaoke mode (K), word-by-word highlighting, per-song timing offset.
 
 Works today: search, play/queue/shuffle/repeat, likes, playlists (create, rename, reorder, delete), listening
 insights (top artists/genres/tracks, clock, streak), recommendations (Made for you, Discover), persisted locally (SQLite / IndexedDB) and synced when signed in.

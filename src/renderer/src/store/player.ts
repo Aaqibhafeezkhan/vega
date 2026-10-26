@@ -60,6 +60,9 @@ function shuffled<T>(arr: T[]): T[] {
 
 let loadToken = 0
 
+/** Live playback position in ms (the store value only updates on timeupdate, ~4 Hz). */
+export const getPosition = (): number => audio.currentTime * 1000
+
 export const usePlayer = create<PlayerState>((set, get) => {
   const startCurrent = async (): Promise<void> => {
     const track = get().queue[get().index]

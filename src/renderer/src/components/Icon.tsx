@@ -15,6 +15,8 @@ const PATHS: Record<string, string> = {
   stats: 'M5 9h3v11H5zM10.500 4h3v16h-3zM16 13h3v7h-3z',
   queue: 'M3 6h14v2H3zM3 11h14v2H3zM3 16h9v2H3zM18 14v6l5-3z',
   folder: 'M10 4H4c-1.100 0-2 .9-2 2v12c0 1.100.9 2 2 2h16c1.100 0 2-.9 2-2V8c0-1.100-.9-2-2-2h-8l-2-2z',
+  lyrics: 'M9 3v10.55A4 4 0 1 0 11 17V7h6V3H9z',
+  expand: 'M5 5h5v2H7v3H5V5zm9 0h5v5h-2V7h-3V5zM5 14h2v3h3v2H5v-5zm12 0h2v5h-5v-2h3v-3z',
   plus: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
   volume: 'M3 9v6h4l5 5V4L7 9H3zm13.500 3A4.500 4.500 0 0 0 14 8v8a4.500 4.500 0 0 0 2.500-4z',
   star: 'M12 2l2.900 6.300 6.900.7-5.100 4.700 1.400 6.800L12 17l-6.100 3.500 1.400-6.800L2.200 9l6.900-.7L12 2z',

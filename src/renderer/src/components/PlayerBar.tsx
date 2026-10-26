@@ -11,8 +11,9 @@ export function PlayerBar() {
   const track = p.queue[p.index]
   const liked = useLibrary((s) => !!track && s.liked.some((x) => refKey(x.ref) === refKey(track.ref)))
   const toggleLike = useLibrary((s) => s.toggleLike)
-  const queueOpen = useUi((s) => s.queueOpen)
-  const toggleQueue = useUi((s) => s.toggleQueue)
+  const panel = useUi((s) => s.panel)
+  const togglePanel = useUi((s) => s.togglePanel)
+  const openNowPlaying = useUi((s) => s.openNowPlaying)
   const pct = p.durationMs ? (p.positionMs / p.durationMs) * 100 : 0
 
   return (
@@ -20,7 +21,9 @@ export function PlayerBar() {
       <div className="pb-left">
         {track ? (
           <>
-            <Cover track={track} size={56} radius={8} />
+            <button className="cover-btn" onClick={openNowPlaying} aria-label="Open now playing">
+              <Cover track={track} size={56} radius={8} />
+            </button>
             <div className="pb-meta">
               <div className="row-title">{track.title}</div>
               <div className="row-sub">{p.error ?? (p.loading ? 'Loading…' : track.artists.join(', '))}</div>
@@ -70,8 +73,14 @@ export function PlayerBar() {
       </div>
 
       <div className="pb-right">
-        <button className={`icon-btn${queueOpen ? ' on' : ''}`} onClick={toggleQueue} aria-label="Queue">
+        <button className={`icon-btn${panel === 'lyrics' ? ' on' : ''}`} onClick={() => togglePanel('lyrics')} aria-label="Lyrics" title="Lyrics">
+          <Icon name="lyrics" size={20} />
+        </button>
+        <button className={`icon-btn${panel === 'queue' ? ' on' : ''}`} onClick={() => togglePanel('queue')} aria-label="Queue" title="Queue">
           <Icon name="queue" size={20} />
+        </button>
+        <button className="icon-btn" onClick={openNowPlaying} aria-label="Full screen" title="Full screen lyrics" disabled={!track}>
+          <Icon name="expand" size={20} />
         </button>
         <Icon name="volume" size={18} />
         <input
