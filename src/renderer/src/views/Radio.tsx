@@ -35,7 +35,7 @@ export function Radio() {
       <header className="page-head">
         <div>
           <p className="eyebrow">Live</p>
-          <h1 className="display">Radio</h1>
+          <h1 className="display">Live <em>radio</em></h1>
           <p className="muted">Thousands of stations, streaming now. Powered by the community radio-browser directory.</p>
         </div>
       </header>

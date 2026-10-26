@@ -109,7 +109,7 @@ export function Settings() {
       <header className="page-head">
         <div>
           <p className="eyebrow">Vega</p>
-          <h1 className="display">Settings</h1>
+          <h1 className="display">Your <em>settings</em></h1>
         </div>
       </header>
 

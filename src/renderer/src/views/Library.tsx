@@ -29,7 +29,9 @@ export function Library() {
         </div>
         <div className="hero-body">
           <p className="eyebrow">Your library</p>
-          <h1 className="display">Liked songs</h1>
+          <h1 className="display">
+            Liked <em>songs</em>
+          </h1>
           <p className="muted">
             {liked.length} songs · {fmtMinutes(mins)} · {playlists.length + smart.length} playlists
           </p>

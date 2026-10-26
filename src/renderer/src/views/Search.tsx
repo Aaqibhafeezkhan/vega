@@ -62,7 +62,7 @@ export function Search() {
       <header className="page-head">
         <div>
           <p className="eyebrow">Search</p>
-          <h1 className="display">{query.trim() ? <>Results for <em>{query.trim()}</em></> : 'Find your sound'}</h1>
+          <h1 className="display">{query.trim() ? <>Results for <em>{query.trim()}</em></> : <>Find your <em>sound</em></>}</h1>
         </div>
       </header>
 

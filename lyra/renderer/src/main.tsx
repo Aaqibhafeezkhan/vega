@@ -1,4 +1,6 @@
-import '@fontsource-variable/inter'
+import '@fontsource-variable/bricolage-grotesque'
+import '@fontsource-variable/jetbrains-mono'
+import '@fontsource/instrument-serif/400-italic.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
@@ -9,6 +11,7 @@ import './styles/player.css'
 import './styles/lyrics.css'
 import './styles/panels.css'
 import './styles/android.css'
+import './styles/theme-d.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

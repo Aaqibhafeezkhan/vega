@@ -182,7 +182,7 @@ export function Sources() {
   if (!backend.supported) {
     return (
       <div className="page-pad">
-        <h1>Sources</h1>
+        <h1 className="display">Music <em>sources</em></h1>
         <div className="banner">
           This browser cannot open local folders. Use Chrome, Edge or the Vega desktop app to add your own music. Online sources work everywhere.
         </div>
@@ -195,7 +195,7 @@ export function Sources() {
     <div className="page-pad">
       <div className="shelf-head">
         <div>
-          <h1>Sources</h1>
+          <h1 className="display">Music <em>sources</em></h1>
           <div className="muted">
             {backend.kind === 'web' ? 'Files stay on your computer; the browser reads them directly.' : 'Folders are scanned into a local database.'}{' '}
             {localCount} tracks in your library.
