@@ -35,3 +35,14 @@ npm run db:rls-check   # creates two throwaway users and proves they cannot read
 - Play events: append-only, idempotent (`<startedAt>-<track>` id), pulled incrementally via the server's `synced_at` cursor.
 - A different account signing in on the same device clears the previous account's local copy first (it is already in the cloud), so data never leaks between accounts.
 - Local-file tracks sync as metadata only; the audio stays on its device.
+
+## 5. Deploying the web build (Vercel)
+
+`vercel.json` configures the build (`npm run build:web` -> `dist-web`), security headers and a Content-Security-Policy that
+allows only Supabase, Audius and Jamendo for network calls. Check the CSP locally with `npm run build:web && npm run serve:dist`.
+
+1. Vercel dashboard > Add New > Project > import `DhruvHarani1/vega`. Framework preset: Other (settings come from `vercel.json`).
+2. Environment Variables (Production and Preview): `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Nothing else; never add the service role key or DB password.
+3. Deploy. Then put the resulting URL in Supabase > Authentication > URL Configuration (Site URL and Redirect URLs).
+
+Every push to `main` redeploys; pull requests get preview URLs (add `https://*-<your-team>.vercel.app` to the Supabase redirect list if you want auth on previews).

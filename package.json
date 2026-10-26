@@ -13,6 +13,7 @@
     "start": "electron-vite preview",
     "dev:web": "vite -c vite.web.config.ts",
     "build:web": "vite build -c vite.web.config.ts",
+    "serve:dist": "node scripts/serve-dist.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "db:migrate": "node scripts/db-migrate.mjs",
