@@ -31,7 +31,7 @@ function devApi(): Plugin {
 }
 
 // Renderer-only dev server (no Electron): `npm run dev:web`. Handy for UI work and browser testing.
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: './',
   root: resolve(__dirname, 'src/renderer'),
   envDir: __dirname, // repo-root .env; only VITE_* variables reach the client bundle
@@ -44,5 +44,7 @@ export default defineConfig({
   },
   plugins: [react(), devApi()],
   build: { outDir: resolve(__dirname, 'dist-web'), emptyOutDir: true },
+  // `--mode agent` (npm run dev:agent): cloud features off, so test runs can never reach the real Supabase project
+  define: mode === 'agent' ? { 'import.meta.env.VITE_CLOUD': '"off"' } : {},
   server: { port: 5174, strictPort: true, fs: { allow: [__dirname] } }
-})
+}))

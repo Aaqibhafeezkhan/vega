@@ -1,0 +1,14 @@
+{
+  "protocol": "AAP v1",
+  "areas": [
+    { "label": "area:web", "owner": "vega", "paths": ["api/**", "src/renderer/src/views/**", "src/renderer/src/components/**", "src/renderer/src/store/**", "src/renderer/src/lib/**", "src/providers/**"] },
+    { "label": "area:desktop", "owner": "vega", "paths": ["src/main/**", "src/preload/**", "electron.vite.config.ts"] },
+    { "label": "area:android", "owner": "vega", "paths": ["android/**", "src/renderer/src/lib/androidBridge.ts", "docs/android.md"] },
+    { "label": "area:lyra", "owner": "vega", "paths": ["lyra/**"] },
+    { "label": "area:design", "owner": "vega", "paths": ["src/renderer/src/styles/**", "docs/design/**"] },
+    { "label": "area:infra", "owner": "vega", "paths": [".github/**", "vercel.json", "scripts/**", "package.json"] },
+    { "label": "area:data", "owner": "vega", "paths": ["supabase/**"] }
+  ],
+  "shared": ["package.json", "package-lock.json", "src/renderer/src/styles/theme-d.css"],
+  "note": "Shared files belong to whoever holds the turn; announce it in your status comment. Outside contributors may touch any area through a pull request; the area owner reviews."
+}

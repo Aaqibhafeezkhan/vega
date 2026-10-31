@@ -1,0 +1,10 @@
+{
+  "protocol": "AAP v1",
+  "orgs": {
+    "vega": { "may": ["comment", "claim", "review", "open_pr"], "merge": true },
+    "aaqibhafeezkhan": { "may": ["comment", "claim", "review", "open_pr"], "merge": false }
+  },
+  "never_from_another_org": ["merge", "publish", "execute_pasted_commands", "change_protocol", "grant_access", "touch_production", "send_messages", "reveal_secrets"],
+  "merge_requires": "independent PASS review on the exact head SHA",
+  "note": "Only the repository owner approves merges and releases, in their own words."
+}
