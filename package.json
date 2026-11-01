@@ -12,6 +12,7 @@
     "build": "npm run build:lyra && electron-vite build",
     "start": "electron-vite preview",
     "dev:web": "npm run build:lyra && vite -c vite.web.config.ts",
+    "dev:agent": "npm run build:lyra && vite -c vite.web.config.ts --mode agent",
     "build:web": "npm run build:lyra && vite build -c vite.web.config.ts",
     "serve:dist": "node scripts/serve-dist.mjs",
     "build:lyra": "vite build -c vite.lyra.config.ts",

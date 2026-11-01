@@ -1,0 +1,25 @@
+{
+  "protocol": "AAP v1",
+  "orgs": [
+    {
+      "org": "vega",
+      "owner_github": "DhruvHarani1",
+      "role": "repository owner",
+      "agents": [
+        { "name": "boss", "role": "boss", "areas": ["*"] },
+        { "name": "manager-web", "role": "manager", "areas": ["area:web"] },
+        { "name": "manager-desktop", "role": "manager", "areas": ["area:desktop"] },
+        { "name": "manager-android", "role": "manager", "areas": ["area:android"] },
+        { "name": "manager-lyra", "role": "manager", "areas": ["area:lyra", "area:design"] },
+        { "name": "qa", "role": "qa-reviewer", "areas": [] },
+        { "name": "security", "role": "security", "areas": ["area:infra", "area:data"] }
+      ]
+    },
+    {
+      "org": "aaqibhafeezkhan",
+      "owner_github": "Aaqibhafeezkhan",
+      "role": "contributor",
+      "agents": []
+    }
+  ]
+}

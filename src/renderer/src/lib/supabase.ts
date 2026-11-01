@@ -18,7 +18,7 @@ export const AUTH_REDIRECT = window.location.protocol.startsWith('http') && wind
  * Security. Null when the build has no credentials, in which case Vega runs fully local (no accounts).
  */
 export const supabase: SupabaseClient | null =
-  url && anon
+  url && anon && import.meta.env.VITE_CLOUD !== 'off' // `npm run dev:agent`: local only, never touches the real project
     ? createClient(url, anon, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
       })
