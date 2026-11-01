@@ -18,7 +18,6 @@ const I: Record<string, Def> = {
   plus: { d: 'M12 5v14M5 12h14' },
   download: { d: 'M12 4v11m0 0-4-4m4 4 4-4M5 19.5h14' },
   upload: { d: 'M12 20V9m0 0-4 4m4-4 4 4M5 4.5h14' },
-  upload: { d: 'M12 20V9m0 0-4 4m4-4 4 4M5 4.5h14' },
   check: { d: 'm5 12.5 4.5 4.5L19 7.5' },
   close: { d: 'M6 6l12 12M18 6 6 18' },
   play: { d: 'M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z', fill: true },
